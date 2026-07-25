@@ -1151,6 +1151,55 @@
         <div class="list-page" id="list-content"></div>
       </div>
     </div>
+
+    <!-- 编辑闲置弹窗 -->
+    <div class="modal" id="edit-modal">
+      <div class="modal-header">
+        <span class="back" onclick="closeModal('edit-modal')">‹</span>
+        <h2>编辑闲置</h2>
+      </div>
+      <div class="modal-body">
+        <div style="padding: 16px;">
+          <div class="form-group">
+            <label>上传图片</label>
+            <div class="photo-upload" id="edit-photo-upload">
+              <div class="photo-box" onclick="document.getElementById('edit-photo-input').click()">+</div>
+              <input type="file" id="edit-photo-input" accept="image/*" multiple onchange="handleEditPhotos(event)">
+            </div>
+            <div class="photo-upload-hint" id="edit-photo-hint">可上传多张，单张建议不超过 5MB</div>
+          </div>
+          <div class="form-group">
+            <label>标题</label>
+            <input type="text" id="edit-title" placeholder="例：毕业出小米台灯，9成新">
+          </div>
+          <div class="form-group">
+            <label>分类</label>
+            <select id="edit-category"></select>
+          </div>
+          <div class="form-group">
+            <label>价格（元）</label>
+            <input type="number" id="edit-price" placeholder="0 表示免费送">
+          </div>
+          <div class="form-group">
+            <label>交易方式</label>
+            <div class="trade-options" id="edit-trade"></div>
+          </div>
+          <div class="form-group">
+            <label>交易地点（选填）</label>
+            <input type="text" id="edit-location" placeholder="可与买家沟通后确定，例：8号楼楼下 / 图书馆">
+          </div>
+          <div class="form-group">
+            <label>联系方式</label>
+            <input type="text" id="edit-contact" placeholder="微信 / 手机号，方便买家联系你">
+          </div>
+          <div class="form-group">
+            <label>物品描述</label>
+            <textarea id="edit-desc" placeholder="描述一下物品成色、购买渠道、使用情况等"></textarea>
+          </div>
+          <button class="btn-primary" onclick="saveEditItem()">保存修改</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -1183,7 +1232,9 @@
       listType: 'my-items',
       listTab: '全部',
       publishMode: 'item',
-      detailGalleryIndex: 0
+      detailGalleryIndex: 0,
+      editItemId: null,
+      editPhotos: []
     };
 
     function init() {
@@ -1339,6 +1390,7 @@
       const html = categories.slice(1).map(c => `<option value="${c}">${c}</option>`).join('');
       document.getElementById('pub-category').innerHTML = html;
       document.getElementById('want-category').innerHTML = html;
+      document.getElementById('edit-category').innerHTML = html;
     }
 
     function renderTradeOptions() {
@@ -1989,6 +2041,7 @@
               <div class="meta">${item.category} · ${item.location} · ${formatTime(item.time)}</div>
               ${state.listType === 'my-items' ? `
                 <div class="actions">
+                  <button onclick="event.stopPropagation(); openEditItem(${item.id})">编辑</button>
                   <button onclick="toggleSold(${item.id})">${item.sold ? '标记在售' : '标记售出'}</button>
                   <button class="danger" onclick="deleteItem(${item.id})">删除</button>
                 </div>
@@ -2025,6 +2078,98 @@
       renderList();
       renderHome();
       updateProfileStats();
+    }
+
+    function openEditItem(id) {
+      const item = state.items.find(i => i.id === id);
+      if (!item) return;
+      state.editItemId = id;
+      state.editPhotos = [...(item.images || [])];
+      document.getElementById('edit-title').value = item.title;
+      document.getElementById('edit-category').value = item.category;
+      document.getElementById('edit-price').value = item.price;
+      document.getElementById('edit-location').value = item.location === '地点面议' ? '' : item.location;
+      document.getElementById('edit-contact').value = item.contact === currentUser.contact ? '' : item.contact;
+      document.getElementById('edit-desc').value = item.desc;
+      renderEditTradeOptions(item.trade);
+      renderEditPhotos();
+      document.getElementById('edit-modal').classList.add('active');
+    }
+
+    function renderEditTradeOptions(selected) {
+      const container = document.getElementById('edit-trade');
+      container.innerHTML = tradeOptions.map(t => `<span class="trade-option ${selected.includes(t) ? 'active' : ''}" data-value="${t}" onclick="toggleEditTrade(this)">${t}</span>`).join('');
+    }
+
+    function toggleEditTrade(el) {
+      el.classList.toggle('active');
+      if (document.querySelectorAll('#edit-trade .active').length === 0) el.classList.add('active');
+    }
+
+    function handleEditPhotos(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.editPhotos.push(ev.target.result);
+          renderEditPhotos();
+        };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = '';
+    }
+
+    function renderEditPhotos() {
+      const container = document.getElementById('edit-photo-upload');
+      let html = state.editPhotos.map((p, i) => `
+        <div class="photo-box filled">
+          <img src="${p}" alt="">
+          <span class="remove" onclick="event.stopPropagation(); removeEditPhoto(${i})">×</span>
+        </div>
+      `).join('');
+      html += `<div class="photo-box" onclick="document.getElementById('edit-photo-input').click()">+</div>`;
+      container.innerHTML = html + `<input type="file" id="edit-photo-input" accept="image/*" multiple onchange="handleEditPhotos(event)">`;
+      const hint = document.getElementById('edit-photo-hint');
+      if (hint) hint.textContent = state.editPhotos.length ? `已选 ${state.editPhotos.length} 张，点击 + 继续添加` : '可上传多张，单张建议不超过 5MB';
+    }
+
+    function removeEditPhoto(i) {
+      state.editPhotos.splice(i, 1);
+      renderEditPhotos();
+    }
+
+    function saveEditItem() {
+      const item = state.items.find(i => i.id === state.editItemId);
+      if (!item) return;
+      const title = document.getElementById('edit-title').value.trim();
+      const price = parseFloat(document.getElementById('edit-price').value);
+      const location = document.getElementById('edit-location').value.trim();
+      const desc = document.getElementById('edit-desc').value.trim();
+      const contact = document.getElementById('edit-contact').value.trim();
+      const category = document.getElementById('edit-category').value;
+      const trade = Array.from(document.querySelectorAll('#edit-trade .active')).map(el => el.dataset.value);
+
+      if (!title) return showToast('请填写标题');
+      if (isNaN(price) || price < 0) return showToast('请填写价格');
+      if (trade.length === 0) return showToast('请至少选择一种交易方式');
+
+      item.title = title;
+      item.price = price;
+      item.category = category;
+      item.location = location || '地点面议';
+      item.trade = trade;
+      item.desc = desc;
+      item.contact = contact || currentUser.contact;
+      item.images = [...state.editPhotos];
+      item.time = Date.now();
+
+      saveData();
+      state.editItemId = null;
+      state.editPhotos = [];
+      closeModal('edit-modal');
+      showToast('修改已保存');
+      renderList();
+      renderHome();
     }
 
     function closeModal(id) {
