@@ -535,6 +535,7 @@
 
     .chat-box {
       padding: 16px;
+      padding-bottom: 110px;
       display: flex;
       flex-direction: column;
       gap: 12px;
@@ -557,6 +558,38 @@
       background: var(--bg2);
       border: 1px solid var(--rule);
       border-bottom-left-radius: 4px;
+    }
+    .chat-bubble.contact-card {
+      max-width: 86%;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+    .chat-bubble.me.contact-card {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: var(--accent-dark);
+    }
+    .chat-toolbar {
+      position: absolute;
+      bottom: 62px;
+      left: 0;
+      right: 0;
+      background: var(--bg2);
+      border-top: 1px solid var(--rule);
+      padding: 10px 12px;
+      display: flex;
+      justify-content: center;
+    }
+    .chat-toolbar button {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(5,150,105,0.2);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
     }
     .chat-input {
       position: absolute;
@@ -855,7 +888,9 @@
           </div>
           <h3 style="font-size: 15px; margin-bottom: 8px;">物品描述</h3>
           <p class="detail-desc" id="detail-desc"></p>
-          <div class="contact-tip" id="detail-contact" style="margin-top: 16px; background: var(--accent-soft); color: var(--accent-dark); padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5;"></div>
+          <div class="contact-tip" id="detail-contact" style="margin-top: 16px; background: var(--accent-soft); color: var(--accent-dark); padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5;">
+            <span>🔒 进入聊天后，双方可自愿交换联系方式。</span>
+          </div>
         </div>
       </div>
       <div class="detail-action">
@@ -884,7 +919,9 @@
           </div>
           <h3 style="font-size: 15px; margin-bottom: 8px;">需求说明</h3>
           <p class="detail-desc" id="want-detail-note"></p>
-          <div class="contact-tip" id="want-detail-contact" style="margin-top: 16px; background: var(--accent-soft); color: var(--accent-dark); padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5;"></div>
+          <div class="contact-tip" id="want-detail-contact" style="margin-top: 16px; background: var(--accent-soft); color: var(--accent-dark); padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5;">
+            <span>🔒 进入聊天后，双方可自愿交换联系方式。</span>
+          </div>
         </div>
       </div>
       <div class="detail-action">
@@ -900,6 +937,9 @@
       </div>
       <div class="modal-body" id="chat-body">
         <div class="chat-box" id="chat-box"></div>
+      </div>
+      <div class="chat-toolbar">
+        <button onclick="requestContact()">🤝 交换联系方式</button>
       </div>
       <div class="chat-input">
         <input type="text" id="chat-msg" placeholder="输入消息…" onkeydown="if(event.key==='Enter')sendChat()">
@@ -1247,7 +1287,6 @@
       document.getElementById('seller-avatar').textContent = item.seller[0];
       document.getElementById('seller-college').textContent = '已认证 · ' + item.college;
       document.getElementById('detail-desc').textContent = item.desc || '暂无描述';
-      document.getElementById('detail-contact').innerHTML = `<strong>联系方式：</strong>${item.contact || currentUser.contact}`;
       const wishBtn = document.getElementById('detail-wish');
       const isLiked = state.likes.includes(id);
       wishBtn.textContent = isLiked ? '已想要' : '想要';
@@ -1288,6 +1327,40 @@
       document.getElementById('chat-modal').classList.add('active');
     }
 
+    function getContactInfo(chat) {
+      if (!chat) return '';
+      if (chat.seller) {
+        return chat.seller === currentUser.name ? currentUser.contact : (chat.contact || '对方暂未填写联系方式');
+      }
+      return chat.user === currentUser.name ? currentUser.contact : (chat.contact || '对方暂未填写联系方式');
+    }
+
+    function requestContact() {
+      if (!state.currentChat) return;
+      const box = document.getElementById('chat-box');
+      if (box.querySelector('.contact-exchanged')) {
+        showToast('你们已经交换过联系方式了');
+        return;
+      }
+      box.innerHTML += `
+        <div class="chat-bubble me contact-card">
+          <div style="font-weight:600; margin-bottom:4px;">申请交换联系方式</div>
+          <div style="font-size:13px; opacity:0.9;">已发送申请，等待对方同意</div>
+        </div>
+      `;
+      box.scrollTop = box.scrollHeight;
+      setTimeout(() => {
+        const contact = getContactInfo(state.currentChat);
+        box.innerHTML += `
+          <div class="chat-bubble other contact-card contact-exchanged">
+            <div style="font-weight:600; margin-bottom:4px;">对方已同意交换联系方式</div>
+            <div style="font-size:13px; opacity:0.9;">${contact}</div>
+          </div>
+        `;
+        box.scrollTop = box.scrollHeight;
+      }, 1200);
+    }
+
     function sendChat() {
       const input = document.getElementById('chat-msg');
       const text = input.value.trim();
@@ -1319,7 +1392,6 @@
       document.getElementById('want-detail-avatar').textContent = want.user[0];
       document.getElementById('want-detail-college').textContent = want.college;
       document.getElementById('want-detail-note').textContent = want.note || '暂无补充说明';
-      document.getElementById('want-detail-contact').innerHTML = `<strong>联系方式：</strong>${want.contact || currentUser.contact}`;
       document.getElementById('want-detail-modal').classList.add('active');
     }
 
