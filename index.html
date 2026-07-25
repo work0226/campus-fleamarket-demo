@@ -423,9 +423,35 @@
       justify-content: center;
       font-size: 28px;
       font-weight: 700;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
     }
+    .profile-avatar .avatar-inner {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; overflow: hidden;
+    }
+    .profile-avatar .avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-avatar .upload-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .profile-avatar:active .upload-overlay, .profile-avatar:hover .upload-overlay { opacity: 1; }
+    .profile-name-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
     .profile-name { font-size: 18px; font-weight: 700; }
+    .profile-name-row .edit-icon { font-size: 14px; opacity: 0.8; cursor: pointer; padding: 2px; }
     .profile-school { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+    .avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .seller-avatar, .message-card .avatar { overflow: hidden; }
+    .seller-avatar img, .message-card .avatar img { width: 100%; height: 100%; object-fit: cover; }
     .profile-stats {
       display: flex;
       justify-content: center;
@@ -1053,8 +1079,15 @@
     <!-- 我的 -->
     <div class="screen" id="screen-profile">
       <div class="profile-header">
-        <div class="profile-avatar">陈</div>
-        <div class="profile-name">陈同学</div>
+        <div class="profile-avatar" id="profile-avatar" onclick="document.getElementById('avatar-input').click()">
+          <div class="avatar-inner" id="profile-avatar-inner">陈</div>
+          <div class="upload-overlay">更换头像</div>
+        </div>
+        <input type="file" id="avatar-input" accept="image/*" style="display:none" onchange="handleAvatarUpload(event)">
+        <div class="profile-name-row">
+          <div class="profile-name" id="profile-name">陈同学</div>
+          <span class="edit-icon" onclick="openNicknameModal()">✏️</span>
+        </div>
         <div class="profile-school">松江校区 · 电子信息学院</div>
         <div class="profile-stats">
           <div><div class="num" id="stat-deal">0</div><div class="label">成交</div></div>
@@ -1278,6 +1311,22 @@
       </div>
       <div class="modal-body campus-modal-body" id="campus-options"></div>
     </div>
+
+    <!-- 修改昵称弹窗 -->
+    <div class="modal" id="nickname-modal">
+      <div class="modal-header">
+        <span class="back" onclick="closeModal('nickname-modal')">‹</span>
+        <h2>修改昵称</h2>
+      </div>
+      <div class="modal-body" style="padding: 24px 16px;">
+        <div class="form-group">
+          <label>新昵称</label>
+          <input type="text" id="nickname-input" maxlength="12" placeholder="2-12个字符，校园内展示">
+        </div>
+        <p id="nickname-hint" style="font-size: 13px; color: var(--muted); margin: -8px 0 16px;">昵称每 30 天可修改一次</p>
+        <button class="btn-primary" id="nickname-save-btn" onclick="saveNickname()">保存</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -1294,7 +1343,7 @@
     ];
     const tradeOptions = ['自提', '送货上门', '当面交易'];
     const campuses = ['松江校区', '延安路校区', '七宝校区'];
-    const currentUser = { name: '陈同学', school: campuses[0], college: '电子信息学院', avatar: '陈', contact: '微信：chen_tongxue' };
+    let currentUser = { name: '陈同学', school: campuses[0], college: '电子信息学院', avatar: '陈', contact: '微信：chen_tongxue', avatarUrl: null, lastNicknameChange: null };
 
     let state = {
       activeTab: 'home',
@@ -1322,6 +1371,7 @@
 
     function init() {
       loadData();
+      loadUser();
       if (!state.campus) state.campus = campuses[0];
       currentUser.school = state.campus;
       const isFirstTime = !localStorage.getItem('campusFleaMarket');
@@ -1408,6 +1458,33 @@
           chats: state.chats
         }));
       } catch (e) { console.log('saveData error', e); }
+    }
+
+    const USER_KEY = 'campusFleaMarketUser';
+    function loadUser() {
+      try {
+        const saved = localStorage.getItem(USER_KEY);
+        if (saved) {
+          const u = JSON.parse(saved);
+          if (u.name) currentUser.name = u.name;
+          if (u.college) currentUser.college = u.college;
+          if (u.contact) currentUser.contact = u.contact;
+          if (u.avatarUrl !== undefined) currentUser.avatarUrl = u.avatarUrl;
+          if (u.lastNicknameChange) currentUser.lastNicknameChange = u.lastNicknameChange;
+          currentUser.avatar = currentUser.name[0];
+        }
+      } catch (e) { console.log('loadUser error', e); }
+    }
+    function saveUser() {
+      try {
+        localStorage.setItem(USER_KEY, JSON.stringify({
+          name: currentUser.name,
+          college: currentUser.college,
+          contact: currentUser.contact,
+          avatarUrl: currentUser.avatarUrl,
+          lastNicknameChange: currentUser.lastNicknameChange
+        }));
+      } catch (e) { console.log('saveUser error', e); }
     }
 
     function bindNav() {
@@ -1757,7 +1834,8 @@
         <span>${formatTime(item.time)}</span>
       `;
       document.getElementById('seller-name').textContent = item.seller;
-      document.getElementById('seller-avatar').textContent = item.seller[0];
+      const isMe = item.seller === currentUser.name;
+      setAvatarEl(document.getElementById('seller-avatar'), item.seller[0], isMe ? currentUser.avatarUrl : null);
       document.getElementById('seller-college').textContent = '已认证 · ' + item.college;
       document.getElementById('detail-desc').textContent = item.desc || '暂无描述';
       const actionEl = document.getElementById('detail-action');
@@ -2167,7 +2245,8 @@
         <span>${formatTime(want.time)}</span>
       `;
       document.getElementById('want-detail-user').textContent = want.user;
-      document.getElementById('want-detail-avatar').textContent = want.user[0];
+      const wantIsMe = want.user === currentUser.name;
+      setAvatarEl(document.getElementById('want-detail-avatar'), want.user[0], wantIsMe ? currentUser.avatarUrl : null);
       document.getElementById('want-detail-college').textContent = want.college;
       document.getElementById('want-detail-note').textContent = want.note || '暂无补充说明';
       document.getElementById('want-detail-modal').classList.add('active');
@@ -2402,6 +2481,10 @@
       document.getElementById(id).classList.remove('active');
     }
 
+    function setAvatarEl(el, text, url) {
+      el.innerHTML = url ? '<img src="' + url + '" class="avatar-img" alt="">' : text;
+    }
+
     function updateProfileStats() {
       const selling = state.items.filter(i => i.seller === currentUser.name && i.status === 'active').length;
       const deal = state.items.filter(i => i.seller === currentUser.name && i.status === 'sold').length;
@@ -2409,6 +2492,67 @@
       document.getElementById('stat-deal').textContent = deal;
       document.getElementById('profile-campus').textContent = state.campus + ' ›';
       document.querySelector('.profile-school').textContent = state.campus + ' · ' + currentUser.college;
+      document.getElementById('profile-name').textContent = currentUser.name;
+      setAvatarEl(document.getElementById('profile-avatar-inner'), currentUser.avatar, currentUser.avatarUrl);
+    }
+
+    function handleAvatarUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { showToast('请选择图片文件'); return; }
+      if (file.size > 2 * 1024 * 1024) { showToast('图片大小不能超过 2MB'); return; }
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        currentUser.avatarUrl = ev.target.result;
+        saveUser();
+        updateProfileStats();
+        showToast('头像已更新');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function openNicknameModal() {
+      const input = document.getElementById('nickname-input');
+      const hint = document.getElementById('nickname-hint');
+      const btn = document.getElementById('nickname-save-btn');
+      input.value = currentUser.name;
+      const last = currentUser.lastNicknameChange;
+      const canChange = !last || (Date.now() - last >= 30 * 24 * 60 * 60 * 1000);
+      if (canChange) {
+        hint.textContent = '昵称每 30 天可修改一次';
+        hint.style.color = 'var(--muted)';
+        btn.disabled = false;
+      } else {
+        const remain = Math.ceil((30 * 24 * 60 * 60 * 1000 - (Date.now() - last)) / (24 * 60 * 60 * 1000));
+        hint.textContent = '昵称修改冷却中，还需 ' + remain + ' 天才能再次修改';
+        hint.style.color = 'var(--danger)';
+        btn.disabled = true;
+      }
+      document.getElementById('nickname-modal').classList.add('active');
+    }
+
+    function saveNickname() {
+      const input = document.getElementById('nickname-input');
+      const name = input.value.trim();
+      if (name.length < 2 || name.length > 12) { showToast('昵称需在 2-12 个字符之间'); return; }
+      const last = currentUser.lastNicknameChange;
+      if (last && Date.now() - last < 30 * 24 * 60 * 60 * 1000) { showToast('30 天内只能修改一次昵称'); return; }
+      const oldName = currentUser.name;
+      if (name === oldName) { closeModal('nickname-modal'); return; }
+      currentUser.name = name;
+      currentUser.avatar = name[0];
+      currentUser.lastNicknameChange = Date.now();
+      state.items.forEach(i => { if (i.seller === oldName) i.seller = name; });
+      state.wanted.forEach(w => { if (w.user === oldName) w.user = name; });
+      state.chats.forEach(c => {
+        if (c.user === oldName) c.user = name;
+        if (c.seller === oldName) c.seller = name;
+      });
+      saveUser();
+      saveData();
+      updateProfileStats();
+      closeModal('nickname-modal');
+      showToast('昵称已更新');
     }
 
     function renderCampus() {
