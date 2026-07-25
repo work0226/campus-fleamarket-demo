@@ -98,6 +98,20 @@
       scrollbar-width: none;
     }
     .tags::-webkit-scrollbar { display: none; }
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      align-items: center;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-bar .filter-label {
+      font-size: 13px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
     .tag {
       white-space: nowrap;
       padding: 6px 14px;
@@ -155,6 +169,7 @@
       color: var(--muted);
       margin-top: 4px;
     }
+    .item-card { position: relative; }
     .item-card .badge {
       position: absolute;
       top: 6px;
@@ -165,6 +180,7 @@
       padding: 2px 6px;
       border-radius: 4px;
     }
+    .item-card .badge.sold { background: var(--muted); }
 
     .empty-state {
       text-align: center;
@@ -204,7 +220,7 @@
       color: var(--muted);
       font-size: 11px;
       cursor: pointer;
-      padding: 4px 16px;
+      padding: 4px 10px;
     }
     .nav-item.active { color: var(--accent); }
     .nav-item .icon {
@@ -214,7 +230,26 @@
       align-items: center;
       justify-content: center;
       font-size: 18px;
+      position: relative;
     }
+    .nav-badge {
+      position: absolute;
+      top: -4px;
+      right: -6px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      background: var(--danger);
+      color: #fff;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      display: none;
+    }
+    .nav-badge.show { display: flex; }
 
     .fab {
       position: absolute;
@@ -281,7 +316,13 @@
       position: relative;
       overflow: hidden;
     }
-    .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .photo-upload-hint {
+      width: 100%;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
     .photo-box .remove {
       position: absolute;
       top: 2px;
@@ -443,13 +484,49 @@
     .detail-gallery {
       height: 320px;
       background: var(--rule);
+      position: relative;
+      overflow: hidden;
+    }
+    .detail-gallery .slides {
+      display: flex;
+      height: 100%;
+      transition: transform 0.25s ease;
+    }
+    .detail-gallery .slide {
+      min-width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--muted);
-      overflow: hidden;
     }
-    .detail-gallery img { width: 100%; height: 100%; object-fit: cover; }
+    .detail-gallery .slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .gallery-dots {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+    .gallery-dots span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.5);
+    }
+    .gallery-dots span.active { background: #fff; }
+    .gallery-count {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.45);
+      color: #fff;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
     .detail-info { padding: 16px; padding-bottom: 80px; }
     .detail-price { font-size: 28px; font-weight: 700; color: var(--accent); }
     .detail-title { font-size: 18px; font-weight: 700; margin: 8px 0; }
@@ -657,6 +734,96 @@
     }
     .list-card .actions .danger { color: var(--danger); border-color: rgba(239,68,68,0.3); }
 
+    .message-card {
+      display: flex;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--rule);
+      cursor: pointer;
+    }
+    .message-card .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .message-card .info { flex: 1; min-width: 0; }
+    .message-card .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .message-card .name { font-weight: 600; }
+    .message-card .time { font-size: 12px; color: var(--muted); }
+    .message-card .bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .message-card .msg {
+      font-size: 13px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+    }
+    .message-card .tag {
+      font-size: 11px;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .message-card .unread {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .message-card .context {
+      font-size: 11px;
+      color: var(--accent);
+      margin-bottom: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .message-card .delete {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 4px 8px;
+      flex-shrink: 0;
+    }
+    .chat-time {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin: 8px 0;
+    }
+    .contact-card .copy-btn {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 10px;
+      background: rgba(255,255,255,0.4);
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
     .sub-tabs {
       display: flex;
       gap: 8px;
@@ -695,13 +862,14 @@
       <div class="topbar">
         <span class="campus">松江校区</span>
         <h1>校园闲置</h1>
-        <span style="color: var(--muted); font-size: 13px;">消息</span>
+        <span style="color: var(--muted); font-size: 13px;" onclick="openMessageModal()">消息</span>
       </div>
       <div class="search-box">
         <span>🔍</span>
         <input type="text" id="home-search" placeholder="搜索教材、电器、宿舍好物…" oninput="filterItems()">
       </div>
       <div class="tags" id="home-tags"></div>
+      <div class="filter-bar" id="home-price-filter"></div>
       <div class="items-grid" id="home-items"></div>
       <div class="empty-state" id="home-empty" style="display:none;">
         <div class="icon">📦</div>
@@ -712,7 +880,12 @@
     <!-- 求购 -->
     <div class="screen" id="screen-wanted">
       <div class="topbar"><h1>求购广场</h1></div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="wanted-search" placeholder="搜索想要求购的物品…" oninput="filterWanted()">
+      </div>
       <div class="tags" id="wanted-tags"></div>
+      <div class="filter-bar" id="wanted-price-filter"></div>
       <div id="wanted-list"></div>
       <div class="empty-state" id="wanted-empty" style="display:none;">
         <div class="icon">📝</div>
@@ -736,6 +909,7 @@
               <div class="photo-box" onclick="document.getElementById('photo-input').click()">+</div>
               <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(event)">
             </div>
+            <div class="photo-upload-hint" id="photo-hint">可上传多张，单张建议不超过 5MB</div>
           </div>
           <div class="form-group">
             <label>标题</label>
@@ -858,6 +1032,10 @@
         <div class="icon">➕</div>
         <span>发布</span>
       </div>
+      <div class="nav-item" data-screen="message">
+        <div class="icon">💬<span class="nav-badge" id="nav-msg-badge">0</span></div>
+        <span>消息</span>
+      </div>
       <div class="nav-item" data-screen="profile">
         <div class="icon">👤</div>
         <span>我的</span>
@@ -874,7 +1052,11 @@
         <h2>商品详情</h2>
       </div>
       <div class="modal-body">
-        <div class="detail-gallery" id="detail-gallery">暂无图片</div>
+        <div class="detail-gallery" id="detail-gallery">
+          <div class="slides" id="detail-slides"></div>
+          <div class="gallery-dots" id="detail-dots"></div>
+          <div class="gallery-count" id="detail-count" style="display:none;"></div>
+        </div>
         <div class="detail-info">
           <div class="detail-price" id="detail-price"></div>
           <div class="detail-title" id="detail-title"></div>
@@ -947,6 +1129,17 @@
       </div>
     </div>
 
+    <!-- 消息列表弹窗 -->
+    <div class="modal" id="message-modal">
+      <div class="modal-header">
+        <span class="back" onclick="closeModal('message-modal')">‹</span>
+        <h2>消息</h2>
+      </div>
+      <div class="modal-body" style="background: var(--bg);">
+        <div id="message-list"></div>
+      </div>
+    </div>
+
     <!-- 列表页弹窗 -->
     <div class="modal" id="list-modal">
       <div class="modal-header">
@@ -964,6 +1157,13 @@
 
   <script>
     const categories = ['全部', '教材资料', '电子数码', '宿舍生活', '美妆护肤', '衣物鞋包', '运动户外', '其他'];
+    const priceRanges = [
+      { label: '全部', min: 0, max: Infinity },
+      { label: '20元以下', min: 0, max: 20 },
+      { label: '20-50元', min: 20, max: 50 },
+      { label: '50-100元', min: 50, max: 100 },
+      { label: '100元以上', min: 100, max: Infinity }
+    ];
     const tradeOptions = ['自提', '送货上门', '当面交易'];
     const currentUser = { name: '陈同学', school: '松江校区', college: '电子信息学院', avatar: '陈', contact: '微信：chen_tongxue' };
 
@@ -971,15 +1171,19 @@
       activeTab: 'home',
       homeTag: '全部',
       wantedTag: '全部',
+      homePriceIdx: 0,
+      wantedPriceIdx: 0,
       items: [],
       wanted: [],
       likes: [],
       photos: [],
+      chats: [],
       currentItem: null,
       currentChat: null,
       listType: 'my-items',
       listTab: '全部',
-      publishMode: 'item'
+      publishMode: 'item',
+      detailGalleryIndex: 0
     };
 
     function init() {
@@ -990,12 +1194,16 @@
       }
       renderHomeTags();
       renderWantedTags();
+      renderPriceFilters();
       renderCategories();
       renderTradeOptions();
       renderHome();
       renderWanted();
+      renderMessages();
       updateProfileStats();
+      updateNavBadge();
       bindNav();
+      bindDetailGallerySwipe();
     }
 
     function seedData() {
@@ -1017,7 +1225,18 @@
     function loadData() {
       try {
         const saved = localStorage.getItem('campusFleaMarket');
-        if (saved) Object.assign(state, JSON.parse(saved));
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          // 兼容旧数据：为会话补全消息列表与未读数字段
+          if (parsed.chats) {
+            parsed.chats = parsed.chats.map(c => ({
+              messages: [],
+              unread: 0,
+              ...c
+            }));
+          }
+          Object.assign(state, parsed);
+        }
       } catch (e) { console.log('loadData error', e); }
     }
 
@@ -1026,14 +1245,21 @@
         localStorage.setItem('campusFleaMarket', JSON.stringify({
           items: state.items,
           wanted: state.wanted,
-          likes: state.likes
+          likes: state.likes,
+          chats: state.chats
         }));
       } catch (e) { console.log('saveData error', e); }
     }
 
     function bindNav() {
       document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => switchTab(item.dataset.screen));
+        item.addEventListener('click', () => {
+          if (item.dataset.screen === 'message') {
+            openMessageModal();
+          } else {
+            switchTab(item.dataset.screen);
+          }
+        });
       });
     }
 
@@ -1072,6 +1298,43 @@
       renderWanted();
     }
 
+    function renderPriceFilters() {
+      const homeContainer = document.getElementById('home-price-filter');
+      const wantedContainer = document.getElementById('wanted-price-filter');
+      if (homeContainer) {
+        homeContainer.innerHTML = '<span class="filter-label">价格：</span>' + priceRanges.map((r, i) => `
+          <span class="tag ${i === state.homePriceIdx ? 'active' : ''}" onclick="setHomePrice(${i})">${r.label}</span>
+        `).join('');
+      }
+      if (wantedContainer) {
+        wantedContainer.innerHTML = '<span class="filter-label">预算：</span>' + priceRanges.map((r, i) => `
+          <span class="tag ${i === state.wantedPriceIdx ? 'active' : ''}" onclick="setWantedPrice(${i})">${r.label}</span>
+        `).join('');
+      }
+    }
+
+    function setHomePrice(idx) {
+      state.homePriceIdx = idx;
+      renderPriceFilters();
+      renderHome();
+    }
+
+    function setWantedPrice(idx) {
+      state.wantedPriceIdx = idx;
+      renderPriceFilters();
+      renderWanted();
+    }
+
+    function filterWanted() {
+      renderWanted();
+    }
+
+    function matchPrice(price, idx) {
+      if (idx === 0) return true;
+      const range = priceRanges[idx];
+      return price >= range.min && price < range.max;
+    }
+
     function renderCategories() {
       const html = categories.slice(1).map(c => `<option value="${c}">${c}</option>`).join('');
       document.getElementById('pub-category').innerHTML = html;
@@ -1102,10 +1365,12 @@
 
     function renderHome() {
       const keyword = document.getElementById('home-search').value.toLowerCase();
+      const priceRange = priceRanges[state.homePriceIdx];
       const filtered = state.items.filter(item => {
         const matchTag = state.homeTag === '全部' || item.category === state.homeTag;
         const matchKw = item.title.toLowerCase().includes(keyword) || item.desc.toLowerCase().includes(keyword);
-        return matchTag && matchKw && !item.sold;
+        const matchPrice = state.homePriceIdx === 0 || (item.price >= priceRange.min && item.price < priceRange.max);
+        return matchTag && matchKw && matchPrice && !item.sold;
       });
       const container = document.getElementById('home-items');
       const empty = document.getElementById('home-empty');
@@ -1117,10 +1382,11 @@
       empty.style.display = 'none';
       container.innerHTML = filtered.map(item => `
         <div class="item-card" onclick="openDetail(${item.id})">
+          ${item.sold ? '<span class="badge sold">已售出</span>' : ''}
           <div class="img">${item.images.length ? `<img src="${item.images[0]}" alt="">` : '[暂无图片]'}</div>
           <div class="info">
             <div class="title">${item.title}</div>
-            <div class="price">¥${item.price}</div>
+            <div class="price">${item.price === 0 ? '免费送' : '¥' + item.price}</div>
             <div class="meta">${item.location} · ${formatTime(item.time)}</div>
           </div>
         </div>
@@ -1128,7 +1394,15 @@
     }
 
     function renderWanted() {
-      const filtered = state.wanted.filter(w => state.wantedTag === '全部' || w.category === state.wantedTag);
+      const keywordEl = document.getElementById('wanted-search');
+      const keyword = keywordEl ? keywordEl.value.toLowerCase() : '';
+      const priceRange = priceRanges[state.wantedPriceIdx];
+      const filtered = state.wanted.filter(w => {
+        const matchTag = state.wantedTag === '全部' || w.category === state.wantedTag;
+        const matchKw = w.title.toLowerCase().includes(keyword) || (w.note && w.note.toLowerCase().includes(keyword));
+        const matchPrice = state.wantedPriceIdx === 0 || (w.budget !== '' && w.budget >= priceRange.min && w.budget < priceRange.max);
+        return matchTag && matchKw && matchPrice;
+      });
       const container = document.getElementById('wanted-list');
       const empty = document.getElementById('wanted-empty');
       if (filtered.length === 0) {
@@ -1151,10 +1425,6 @@
 
     function handlePhotos(e) {
       const files = Array.from(e.target.files);
-      if (state.photos.length + files.length > 9) {
-        showToast('最多上传 9 张图片');
-        return;
-      }
       files.forEach(file => {
         const reader = new FileReader();
         reader.onload = (ev) => {
@@ -1174,10 +1444,10 @@
           <span class="remove" onclick="event.stopPropagation(); removePhoto(${i})">×</span>
         </div>
       `).join('');
-      if (state.photos.length < 9) {
-        html += `<div class="photo-box" onclick="document.getElementById('photo-input').click()">+</div>`;
-      }
+      html += `<div class="photo-box" onclick="document.getElementById('photo-input').click()">+</div>`;
       container.innerHTML = html + `<input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(event)">`;
+      const hint = document.getElementById('photo-hint');
+      if (hint) hint.textContent = state.photos.length ? `已选 ${state.photos.length} 张，点击 + 继续添加` : '可上传多张，单张建议不超过 5MB';
     }
 
     function removePhoto(i) {
@@ -1274,7 +1544,8 @@
       const item = state.items.find(i => i.id === id);
       if (!item) return;
       state.currentItem = item;
-      document.getElementById('detail-gallery').innerHTML = item.images.length ? `<img src="${item.images[0]}" alt="">` : '暂无图片';
+      state.detailGalleryIndex = 0;
+      renderDetailGallery(item.images);
       document.getElementById('detail-price').textContent = item.price === 0 ? '免费送' : `¥${item.price}`;
       document.getElementById('detail-title').textContent = item.title;
       document.getElementById('detail-tags').innerHTML = `
@@ -1294,6 +1565,45 @@
       document.getElementById('detail-modal').classList.add('active');
     }
 
+    function renderDetailGallery(images) {
+      const slides = document.getElementById('detail-slides');
+      const dots = document.getElementById('detail-dots');
+      const count = document.getElementById('detail-count');
+      if (!images || images.length === 0) {
+        slides.innerHTML = '<div class="slide">暂无图片</div>';
+        dots.innerHTML = '';
+        count.style.display = 'none';
+        return;
+      }
+      slides.innerHTML = images.map((src, i) => `
+        <div class="slide"><img src="${src}" alt=""></div>
+      `).join('');
+      dots.innerHTML = images.map((_, i) => `<span class="${i === state.detailGalleryIndex ? 'active' : ''}" onclick="setDetailGallery(${i})"></span>`).join('');
+      count.textContent = `${state.detailGalleryIndex + 1} / ${images.length}`;
+      count.style.display = 'block';
+      slides.style.transform = `translateX(-${state.detailGalleryIndex * 100}%)`;
+    }
+
+    function setDetailGallery(index) {
+      const item = state.currentItem;
+      if (!item || !item.images.length) return;
+      state.detailGalleryIndex = Math.max(0, Math.min(index, item.images.length - 1));
+      renderDetailGallery(item.images);
+    }
+
+    let detailGalleryTouchStartX = 0;
+    function bindDetailGallerySwipe() {
+      const gallery = document.getElementById('detail-gallery');
+      if (!gallery) return;
+      gallery.addEventListener('touchstart', e => { detailGalleryTouchStartX = e.touches[0].clientX; });
+      gallery.addEventListener('touchend', e => {
+        const diff = e.changedTouches[0].clientX - detailGalleryTouchStartX;
+        if (Math.abs(diff) > 40) {
+          setDetailGallery(state.detailGalleryIndex + (diff < 0 ? 1 : -1));
+        }
+      });
+    }
+
     function toggleWish() {
       if (!state.currentItem) return;
       const id = state.currentItem.id;
@@ -1309,21 +1619,45 @@
       if (!state.currentItem) return;
       const item = state.currentItem;
       state.currentChat = item;
+      const initialMsg = { from: 'other', text: `你好，我对你的「${item.title}」感兴趣，请问还在吗？`, time: Date.now(), type: 'text' };
+      const record = updateChatRecord({
+        type: 'item',
+        targetId: item.id,
+        peerName: item.seller,
+        peerCollege: item.college,
+        title: item.title,
+        lastMsg: initialMsg.text,
+        lastTime: initialMsg.time,
+        unread: 0
+      });
+      if (!record.messages || record.messages.length === 0) {
+        record.messages = [initialMsg];
+        saveData();
+      }
       document.getElementById('chat-title').textContent = item.seller;
-      const box = document.getElementById('chat-box');
-      box.innerHTML = `
-        <div class="chat-bubble other">你好，我对你的「${item.title}」感兴趣，请问还在吗？</div>
-      `;
+      renderChatMessages(record.messages);
       document.getElementById('chat-modal').classList.add('active');
     }
 
     function openChatWithWant(want) {
       state.currentChat = want;
+      const initialMsg = { from: 'other', text: `你好，我看到你的求购「${want.title}」，我有这个物品，可以聊聊。`, time: Date.now(), type: 'text' };
+      const record = updateChatRecord({
+        type: 'want',
+        targetId: want.id,
+        peerName: want.user,
+        peerCollege: want.college,
+        title: want.title,
+        lastMsg: initialMsg.text,
+        lastTime: initialMsg.time,
+        unread: 0
+      });
+      if (!record.messages || record.messages.length === 0) {
+        record.messages = [initialMsg];
+        saveData();
+      }
       document.getElementById('chat-title').textContent = want.user;
-      const box = document.getElementById('chat-box');
-      box.innerHTML = `
-        <div class="chat-bubble other">你好，我看到你的求购「${want.title}」，我有这个物品，可以聊聊。</div>
-      `;
+      renderChatMessages(record.messages);
       document.getElementById('chat-modal').classList.add('active');
     }
 
@@ -1335,44 +1669,236 @@
       return chat.user === currentUser.name ? currentUser.contact : (chat.contact || '对方暂未填写联系方式');
     }
 
+    function updateChatRecord(record) {
+      const idx = state.chats.findIndex(c => c.type === record.type && c.targetId === record.targetId);
+      let updated;
+      if (idx !== -1) {
+        updated = { ...state.chats[idx], ...record };
+        state.chats.splice(idx, 1);
+        state.chats.unshift(updated);
+      } else {
+        updated = { messages: [], unread: 0, ...record };
+        state.chats.unshift(updated);
+      }
+      saveData();
+      renderMessages();
+      updateNavBadge();
+      return updated;
+    }
+
+    function renderMessages() {
+      const container = document.getElementById('message-list');
+      if (!container) return;
+      if (state.chats.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>暂无消息</p><p style="font-size:13px; margin-top:8px;">从商品或求购详情页发起沟通</p></div>';
+        return;
+      }
+      container.innerHTML = state.chats.map((c, i) => `
+        <div class="message-card" onclick="openChatByRecord(${i})">
+          <div class="avatar">${c.peerName[0]}</div>
+          <div class="info">
+            <div class="context">${c.type === 'item' ? '闲置' : '求购'} · ${c.title}</div>
+            <div class="top">
+              <span class="name">${c.peerName}</span>
+              <span class="time">${formatTime(c.lastTime)}</span>
+            </div>
+            <div class="bottom">
+              <span class="msg">${c.lastMsg}</span>
+              ${c.unread > 0 ? '<span class="unread"></span>' : ''}
+              <span class="tag" onclick="event.stopPropagation(); deleteChat(${i})">删除</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function deleteChat(index) {
+      if (!confirm('删除后聊天记录将无法恢复，确定删除？')) return;
+      state.chats.splice(index, 1);
+      saveData();
+      renderMessages();
+      updateNavBadge();
+    }
+
+    function updateNavBadge() {
+      const badge = document.getElementById('nav-msg-badge');
+      const total = state.chats.reduce((sum, c) => sum + (c.unread || 0), 0);
+      badge.textContent = total > 99 ? '99+' : total;
+      badge.classList.toggle('show', total > 0);
+    }
+
+    function openMessageModal() {
+      renderMessages();
+      document.getElementById('message-modal').classList.add('active');
+    }
+
+    function renderChatMessages(messages) {
+      const box = document.getElementById('chat-box');
+      if (!messages || messages.length === 0) {
+        box.innerHTML = '<div class="chat-time">开始聊天吧</div>';
+        return;
+      }
+      let lastTime = 0;
+      const timeGap = 3 * 60 * 1000;
+      box.innerHTML = messages.map(m => {
+        let timeHtml = '';
+        if (m.time - lastTime > timeGap) {
+          timeHtml = `<div class="chat-time">${formatChatTime(m.time)}</div>`;
+          lastTime = m.time;
+        }
+        const cls = m.from === 'me' ? 'me' : 'other';
+        if (m.type === 'contact') {
+          const copyBtn = m.from === 'me' ? '' : `<span class="copy-btn" onclick="copyContact('${m.contact || ''}')">复制</span>`;
+          return timeHtml + `
+            <div class="chat-bubble ${cls} contact-card">
+              <div style="font-weight:600; margin-bottom:4px;">${m.text}</div>
+              <div style="font-size:13px; opacity:0.9;">${m.contact || ''}</div>
+              ${copyBtn}
+            </div>
+          `;
+        }
+        return timeHtml + `<div class="chat-bubble ${cls}">${escapeHtml(m.text)}</div>`;
+      }).join('');
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatChatTime(ts) {
+      const d = new Date(ts);
+      return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function copyContact(text) {
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => showToast('已复制联系方式')).catch(() => showToast('复制失败'));
+    }
+
+    function openChatByRecord(index) {
+      const record = state.chats[index];
+      if (!record) return;
+      if (record.type === 'item') {
+        const item = state.items.find(i => i.id === record.targetId);
+        if (!item) return showToast('该商品已不存在');
+        state.currentItem = item;
+        state.currentChat = item;
+      } else {
+        const want = state.wanted.find(w => w.id === record.targetId);
+        if (!want) return showToast('该求购已不存在');
+        currentWant = want;
+        state.currentChat = want;
+      }
+      document.getElementById('chat-title').textContent = record.peerName;
+      renderChatMessages(record.messages || []);
+      if (record.unread > 0) {
+        record.unread = 0;
+        saveData();
+        renderMessages();
+        updateNavBadge();
+      }
+      document.getElementById('chat-modal').classList.add('active');
+      closeModal('message-modal');
+    }
+
     function requestContact() {
       if (!state.currentChat) return;
-      const box = document.getElementById('chat-box');
-      if (box.querySelector('.contact-exchanged')) {
+      let record = findChatRecord();
+      if (record && record.messages.some(m => m.type === 'contact')) {
         showToast('你们已经交换过联系方式了');
         return;
       }
-      box.innerHTML += `
-        <div class="chat-bubble me contact-card">
-          <div style="font-weight:600; margin-bottom:4px;">申请交换联系方式</div>
-          <div style="font-size:13px; opacity:0.9;">已发送申请，等待对方同意</div>
-        </div>
-      `;
-      box.scrollTop = box.scrollHeight;
+      const now = Date.now();
+      const applyMsg = { from: 'me', text: '申请交换联系方式', time: now, type: 'contact', contact: '已发送申请，等待对方同意' };
+      if (!record) {
+        const type = state.currentChat.seller ? 'item' : 'want';
+        const title = state.currentChat.title || state.currentChat.seller || '未知';
+        record = updateChatRecord({
+          type,
+          targetId: state.currentChat.id,
+          peerName: state.currentChat.seller || state.currentChat.user,
+          peerCollege: state.currentChat.college,
+          title,
+          lastMsg: applyMsg.text,
+          lastTime: now,
+          unread: 0
+        });
+      }
+      record.messages.push(applyMsg);
+      record.lastMsg = applyMsg.text;
+      record.lastTime = now;
+      record.unread = 0;
+      renderChatMessages(record.messages);
+      saveData();
+      updateChatRecord(record);
       setTimeout(() => {
         const contact = getContactInfo(state.currentChat);
-        box.innerHTML += `
-          <div class="chat-bubble other contact-card contact-exchanged">
-            <div style="font-weight:600; margin-bottom:4px;">对方已同意交换联系方式</div>
-            <div style="font-size:13px; opacity:0.9;">${contact}</div>
-          </div>
-        `;
-        box.scrollTop = box.scrollHeight;
+        const agreeMsg = { from: 'other', text: '对方已同意交换联系方式', time: Date.now(), type: 'contact', contact };
+        record.messages.push(agreeMsg);
+        record.lastMsg = agreeMsg.text;
+        record.lastTime = agreeMsg.time;
+        saveData();
+        if (document.getElementById('chat-modal').classList.contains('active')) {
+          renderChatMessages(record.messages);
+        } else {
+          renderMessages();
+          updateNavBadge();
+        }
       }, 1200);
     }
 
     function sendChat() {
       const input = document.getElementById('chat-msg');
       const text = input.value.trim();
-      if (!text) return;
-      const box = document.getElementById('chat-box');
-      box.innerHTML += `<div class="chat-bubble me">${text}</div>`;
+      if (!text || !state.currentChat) return;
+      let record = findChatRecord();
+      const now = Date.now();
+      const myMsg = { from: 'me', text, time: now, type: 'text' };
+      if (!record) {
+        const type = state.currentChat.seller ? 'item' : 'want';
+        const title = state.currentChat.title || state.currentChat.seller || '未知';
+        record = updateChatRecord({
+          type,
+          targetId: state.currentChat.id,
+          peerName: state.currentChat.seller || state.currentChat.user,
+          peerCollege: state.currentChat.college,
+          title,
+          lastMsg: text,
+          lastTime: now,
+          unread: 0
+        });
+      }
+      record.messages.push(myMsg);
+      record.lastMsg = text;
+      record.lastTime = now;
+      record.unread = 0;
+      renderChatMessages(record.messages);
       input.value = '';
-      box.scrollTop = box.scrollHeight;
+      saveData();
+      updateChatRecord(record);
       setTimeout(() => {
-        box.innerHTML += `<div class="chat-bubble other">好的，我们可以约个时间面交。</div>`;
-        box.scrollTop = box.scrollHeight;
+        const reply = { from: 'other', text: '好的，我们可以约个时间面交。', time: Date.now(), type: 'text' };
+        record.messages.push(reply);
+        record.lastMsg = reply.text;
+        record.lastTime = reply.time;
+        record.unread = 0;
+        saveData();
+        if (document.getElementById('chat-modal').classList.contains('active')) {
+          renderChatMessages(record.messages);
+        } else {
+          renderMessages();
+          updateNavBadge();
+        }
       }, 800);
+    }
+
+    function findChatRecord() {
+      if (!state.currentChat) return null;
+      const type = state.currentChat.seller ? 'item' : 'want';
+      return state.chats.find(c => c.type === type && c.targetId === state.currentChat.id);
     }
 
     let currentWant = null;
