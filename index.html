@@ -1413,6 +1413,16 @@
       renderWanted();
     }
 
+    function sortList(list, sortIdx) {
+      return list.slice().sort((a, b) => {
+        if (sortIdx === 0) return b.time - a.time;
+        const pa = a.price !== undefined ? a.price : (Number(a.budget) || 0);
+        const pb = b.price !== undefined ? b.price : (Number(b.budget) || 0);
+        if (sortIdx === 1) return pa - pb;
+        return pb - pa;
+      });
+    }
+
     function matchPrice(price, idx) {
       if (idx === 0) return true;
       const range = priceRanges[idx];
@@ -1451,12 +1461,12 @@
     function renderHome() {
       const keyword = document.getElementById('home-search').value.toLowerCase();
       const priceRange = priceRanges[state.homePriceIdx];
-      const filtered = state.items.filter(item => {
+      const filtered = sortList(state.items.filter(item => {
         const matchTag = state.homeTag === '全部' || item.category === state.homeTag;
         const matchKw = item.title.toLowerCase().includes(keyword) || item.desc.toLowerCase().includes(keyword);
         const matchPrice = state.homePriceIdx === 0 || (item.price >= priceRange.min && item.price < priceRange.max);
         return matchTag && matchKw && matchPrice && !item.sold;
-      }).sort(sortItems);
+      }), state.homeSort);
       const container = document.getElementById('home-items');
       const empty = document.getElementById('home-empty');
       if (filtered.length === 0) {
@@ -1482,12 +1492,12 @@
       const keywordEl = document.getElementById('wanted-search');
       const keyword = keywordEl ? keywordEl.value.toLowerCase() : '';
       const priceRange = priceRanges[state.wantedPriceIdx];
-      const filtered = state.wanted.filter(w => {
+      const filtered = sortList(state.wanted.filter(w => {
         const matchTag = state.wantedTag === '全部' || w.category === state.wantedTag;
         const matchKw = w.title.toLowerCase().includes(keyword) || (w.note && w.note.toLowerCase().includes(keyword));
         const matchPrice = state.wantedPriceIdx === 0 || (w.budget !== '' && w.budget >= priceRange.min && w.budget < priceRange.max);
         return matchTag && matchKw && matchPrice;
-      });
+      }), state.wantedSort);
       const container = document.getElementById('wanted-list');
       const empty = document.getElementById('wanted-empty');
       if (filtered.length === 0) {
