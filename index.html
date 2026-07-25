@@ -853,6 +853,74 @@
       display: none;
     }
     .toast.show { display: block; }
+
+    .item-status {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-weight: 600;
+      z-index: 2;
+    }
+    .item-status.sold { background: #fee2e2; color: #991b1b; }
+    .item-status.offline { background: #f1f5f9; color: #475569; }
+    .item-card { position: relative; }
+
+    .detail-action .btn-status {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid var(--rule);
+      background: var(--bg2);
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .chat-img {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: block;
+    }
+    .chat-read {
+      font-size: 10px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 2px;
+      padding-right: 2px;
+    }
+
+    .campus-modal-body {
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .campus-option {
+      padding: 16px;
+      border: 1px solid var(--rule);
+      border-radius: 12px;
+      background: var(--bg2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .campus-option.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .campus-option .check { color: var(--accent); font-weight: 700; display: none; }
+    .campus-option.active .check { display: block; }
+    .campus-hint {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -860,7 +928,7 @@
     <!-- 首页 -->
     <div class="screen active" id="screen-home">
       <div class="topbar">
-        <span class="campus">松江校区</span>
+        <span class="campus" id="home-campus" onclick="openCampusModal()">松江校区</span>
         <h1>校园闲置</h1>
         <span style="color: var(--muted); font-size: 13px;" onclick="openMessageModal()">消息</span>
       </div>
@@ -1009,9 +1077,9 @@
         </div>
       </div>
       <div class="menu-list">
-        <div class="menu-item">
-          <div class="left"><span class="dot"></span>校园认证</div>
-          <span style="color: var(--accent); font-size: 13px; font-weight: 600;">已认证 ›</span>
+        <div class="menu-item" onclick="openCampusModal()">
+          <div class="left"><span class="dot"></span>我的校区</div>
+          <span style="color: var(--accent); font-size: 13px; font-weight: 600;" id="profile-campus">已认证 ›</span>
         </div>
         <div class="menu-item">
           <div class="left"><span class="dot"></span>设置</div>
@@ -1077,10 +1145,7 @@
           </div>
         </div>
       </div>
-      <div class="detail-action">
-        <button class="btn-wish" id="detail-wish" onclick="toggleWish()">想要</button>
-        <button class="btn-chat" onclick="openChat()">聊一聊</button>
-      </div>
+      <div class="detail-action" id="detail-action"></div>
     </div>
 
     <!-- 求购详情弹窗 -->
@@ -1124,6 +1189,8 @@
       </div>
       <div class="chat-toolbar">
         <button onclick="requestContact()">🤝 交换联系方式</button>
+        <button onclick="document.getElementById('chat-image-input').click()">🖼️ 图片</button>
+        <input type="file" id="chat-image-input" accept="image/*" style="display:none;" onchange="sendChatImage(event)">
       </div>
       <div class="chat-input">
         <input type="text" id="chat-msg" placeholder="输入消息…" onkeydown="if(event.key==='Enter')sendChat()">
@@ -1202,6 +1269,15 @@
         </div>
       </div>
     </div>
+
+    <!-- 校区选择弹窗 -->
+    <div class="modal" id="campus-modal">
+      <div class="modal-header">
+        <span class="back" onclick="closeModal('campus-modal')">‹</span>
+        <h2>选择校区</h2>
+      </div>
+      <div class="modal-body campus-modal-body" id="campus-options"></div>
+    </div>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -1217,7 +1293,8 @@
       { label: '100元以上', min: 100, max: Infinity }
     ];
     const tradeOptions = ['自提', '送货上门', '当面交易'];
-    const currentUser = { name: '陈同学', school: '松江校区', college: '电子信息学院', avatar: '陈', contact: '微信：chen_tongxue' };
+    const campuses = ['松江校区', '延安路校区', '七宝校区'];
+    const currentUser = { name: '陈同学', school: campuses[0], college: '电子信息学院', avatar: '陈', contact: '微信：chen_tongxue' };
 
     let state = {
       activeTab: 'home',
@@ -1227,6 +1304,7 @@
       wantedPriceIdx: 0,
       homeSort: 0,
       wantedSort: 0,
+      campus: currentUser.school,
       items: [],
       wanted: [],
       likes: [],
@@ -1244,7 +1322,10 @@
 
     function init() {
       loadData();
-      if (state.items.length === 0) {
+      if (!state.campus) state.campus = campuses[0];
+      currentUser.school = state.campus;
+      const isFirstTime = !localStorage.getItem('campusFleaMarket');
+      if (!isFirstTime && state.items.length === 0) {
         seedData();
         saveData();
       }
@@ -1254,6 +1335,7 @@
       renderSortFilters();
       renderCategories();
       renderTradeOptions();
+      renderCampus();
       renderHome();
       renderWanted();
       renderMessages();
@@ -1261,21 +1343,24 @@
       updateNavBadge();
       bindNav();
       bindDetailGallerySwipe();
+      if (isFirstTime) {
+        openCampusModal(true);
+      }
     }
 
     function seedData() {
       state.items = [
-        { id: 1, title: '线性代数教材 99新', price: 12, category: '教材资料', location: '13号楼', trade: ['自提'], desc: '上学期买的，基本没翻过，成色很新。', images: [], seller: '张同学', college: '数学学院', time: Date.now() - 7200000, sold: false, contact: '微信：zhang_math' },
-        { id: 2, title: '小米台灯 毕业出', price: 35, category: '宿舍生活', location: '8号楼楼下', trade: ['自提', '当面交易'], desc: '去年双十一购入，三档亮度，功能完好。', images: [], seller: '陈同学', college: '电子信息学院', time: Date.now() - 18000000, sold: false, contact: '微信：chen_tongxue' },
-        { id: 3, title: '计算器 fx-991', price: 45, category: '电子数码', location: '图书馆', trade: ['自提'], desc: '考试用了一学期，电池还有电。', images: [], seller: '李同学', college: '理学院', time: Date.now() - 86400000, sold: false, contact: '微信：li_sci' },
-        { id: 4, title: '瑜伽垫 几乎全新', price: 18, category: '运动户外', location: '5号楼', trade: ['自提'], desc: '买回来用了两次就闲置了。', images: [], seller: '王同学', college: '管理学院', time: Date.now() - 86400000, sold: false, contact: '微信：wang_gl' },
-        { id: 5, title: 'AirPods 2 右耳', price: 150, category: '电子数码', location: '21号楼', trade: ['当面交易'], desc: '左耳丢了，出右耳和充电仓。', images: [], seller: '赵同学', college: '外语学院', time: Date.now() - 172800000, sold: false, contact: '微信：zhao_fl' },
-        { id: 6, title: '考研英语词汇书', price: 8, category: '教材资料', location: '3号楼', trade: ['自提'], desc: '划了一些重点，不影响使用。', images: [], seller: '刘同学', college: '文学院', time: Date.now() - 172800000, sold: false, contact: '微信：liu_lit' }
+        { id: 1, title: '线性代数教材 99新', price: 12, category: '教材资料', location: '13号楼', trade: ['自提'], desc: '上学期买的，基本没翻过，成色很新。', images: [], seller: '张同学', college: '数学学院', campus: state.campus, time: Date.now() - 7200000, status: 'active', sold: false, contact: '微信：zhang_math' },
+        { id: 2, title: '小米台灯 毕业出', price: 35, category: '宿舍生活', location: '8号楼楼下', trade: ['自提', '当面交易'], desc: '去年双十一购入，三档亮度，功能完好。', images: [], seller: '陈同学', college: '电子信息学院', campus: state.campus, time: Date.now() - 18000000, status: 'active', sold: false, contact: '微信：chen_tongxue' },
+        { id: 3, title: '计算器 fx-991', price: 45, category: '电子数码', location: '图书馆', trade: ['自提'], desc: '考试用了一学期，电池还有电。', images: [], seller: '李同学', college: '理学院', campus: state.campus, time: Date.now() - 86400000, status: 'active', sold: false, contact: '微信：li_sci' },
+        { id: 4, title: '瑜伽垫 几乎全新', price: 18, category: '运动户外', location: '5号楼', trade: ['自提'], desc: '买回来用了两次就闲置了。', images: [], seller: '王同学', college: '管理学院', campus: state.campus, time: Date.now() - 86400000, status: 'active', sold: false, contact: '微信：wang_gl' },
+        { id: 5, title: 'AirPods 2 右耳', price: 150, category: '电子数码', location: '21号楼', trade: ['当面交易'], desc: '左耳丢了，出右耳和充电仓。', images: [], seller: '赵同学', college: '外语学院', campus: state.campus, time: Date.now() - 172800000, status: 'active', sold: false, contact: '微信：zhao_fl' },
+        { id: 6, title: '考研英语词汇书', price: 8, category: '教材资料', location: '3号楼', trade: ['自提'], desc: '划了一些重点，不影响使用。', images: [], seller: '刘同学', college: '文学院', campus: state.campus, time: Date.now() - 172800000, status: 'active', sold: false, contact: '微信：liu_lit' }
       ];
       state.wanted = [
-        { id: 1, title: '高等数学（同济第七版）上下册', budget: 20, condition: '8成新以上', category: '教材资料', user: '张同学', college: '计算机学院', time: Date.now() - 10800000, contact: '微信：zhang_cs' },
-        { id: 2, title: '床上桌，带抽屉款', budget: 50, condition: '无明显损坏', category: '宿舍生活', user: '李同学', college: '管理学院', time: Date.now() - 18000000, contact: '微信：li_gl' },
-        { id: 3, title: '四级真题卷（近5年）', budget: 10, condition: '有答案解析', category: '教材资料', user: '王同学', college: '外语学院', time: Date.now() - 86400000, contact: '微信：wang_fl' }
+        { id: 1, title: '高等数学（同济第七版）上下册', budget: 20, condition: '8成新以上', category: '教材资料', user: '张同学', college: '计算机学院', campus: state.campus, time: Date.now() - 10800000, contact: '微信：zhang_cs' },
+        { id: 2, title: '床上桌，带抽屉款', budget: 50, condition: '无明显损坏', category: '宿舍生活', user: '李同学', college: '管理学院', campus: state.campus, time: Date.now() - 18000000, contact: '微信：li_gl' },
+        { id: 3, title: '四级真题卷（近5年）', budget: 10, condition: '有答案解析', category: '教材资料', user: '王同学', college: '外语学院', campus: state.campus, time: Date.now() - 86400000, contact: '微信：wang_fl' }
       ];
     }
 
@@ -1292,6 +1377,22 @@
               ...c
             }));
           }
+          // 兼容旧数据：补充商品状态与校区字段
+          if (parsed.items) {
+            parsed.items = parsed.items.map(i => {
+              const migrated = { ...i };
+              if (!migrated.status) migrated.status = migrated.sold ? 'sold' : 'active';
+              if (!migrated.campus) migrated.campus = state.campus;
+              return migrated;
+            });
+          }
+          if (parsed.wanted) {
+            parsed.wanted = parsed.wanted.map(w => {
+              const migrated = { ...w };
+              if (!migrated.campus) migrated.campus = state.campus;
+              return migrated;
+            });
+          }
           Object.assign(state, parsed);
         }
       } catch (e) { console.log('loadData error', e); }
@@ -1300,6 +1401,7 @@
     function saveData() {
       try {
         localStorage.setItem('campusFleaMarket', JSON.stringify({
+          campus: state.campus,
           items: state.items,
           wanted: state.wanted,
           likes: state.likes,
@@ -1462,10 +1564,12 @@
       const keyword = document.getElementById('home-search').value.toLowerCase();
       const priceRange = priceRanges[state.homePriceIdx];
       const filtered = sortList(state.items.filter(item => {
+        const matchCampus = item.campus === state.campus;
         const matchTag = state.homeTag === '全部' || item.category === state.homeTag;
         const matchKw = item.title.toLowerCase().includes(keyword) || item.desc.toLowerCase().includes(keyword);
         const matchPrice = state.homePriceIdx === 0 || (item.price >= priceRange.min && item.price < priceRange.max);
-        return matchTag && matchKw && matchPrice && !item.sold;
+        const matchStatus = item.status === 'active';
+        return matchCampus && matchTag && matchKw && matchPrice && matchStatus;
       }), state.homeSort);
       const container = document.getElementById('home-items');
       const empty = document.getElementById('home-empty');
@@ -1493,10 +1597,11 @@
       const keyword = keywordEl ? keywordEl.value.toLowerCase() : '';
       const priceRange = priceRanges[state.wantedPriceIdx];
       const filtered = sortList(state.wanted.filter(w => {
+        const matchCampus = w.campus === state.campus;
         const matchTag = state.wantedTag === '全部' || w.category === state.wantedTag;
         const matchKw = w.title.toLowerCase().includes(keyword) || (w.note && w.note.toLowerCase().includes(keyword));
         const matchPrice = state.wantedPriceIdx === 0 || (w.budget !== '' && w.budget >= priceRange.min && w.budget < priceRange.max);
-        return matchTag && matchKw && matchPrice;
+        return matchCampus && matchTag && matchKw && matchPrice;
       }), state.wantedSort);
       const container = document.getElementById('wanted-list');
       const empty = document.getElementById('wanted-empty');
@@ -1575,7 +1680,9 @@
         images: [...state.photos],
         seller: currentUser.name,
         college: currentUser.college,
+        campus: currentUser.school,
         time: Date.now(),
+        status: 'active',
         sold: false
       };
       state.items.unshift(item);
@@ -1606,6 +1713,7 @@
         contact: contact || currentUser.contact,
         user: currentUser.name,
         college: currentUser.college,
+        campus: currentUser.school,
         time: Date.now()
       };
       state.wanted.unshift(want);
@@ -1652,10 +1760,21 @@
       document.getElementById('seller-avatar').textContent = item.seller[0];
       document.getElementById('seller-college').textContent = '已认证 · ' + item.college;
       document.getElementById('detail-desc').textContent = item.desc || '暂无描述';
-      const wishBtn = document.getElementById('detail-wish');
+      const actionEl = document.getElementById('detail-action');
+      const isOwner = item.seller === currentUser.name;
       const isLiked = state.likes.includes(id);
-      wishBtn.textContent = isLiked ? '已想要' : '想要';
-      wishBtn.classList.toggle('active', isLiked);
+      if (isOwner) {
+        actionEl.innerHTML = `
+          <button class="btn-status" onclick="setItemStatus(${item.id}, 'active')">${item.status === 'active' ? '● 在售中' : '重新上架'}</button>
+          <button class="btn-status" onclick="setItemStatus(${item.id}, 'sold')">${item.status === 'sold' ? '已售出' : '标记售出'}</button>
+          <button class="btn-status" onclick="setItemStatus(${item.id}, 'offline')">${item.status === 'offline' ? '已下架' : '下架'}</button>
+        `;
+      } else {
+        actionEl.innerHTML = `
+          <button class="btn-wish ${isLiked ? 'active' : ''}" id="detail-wish" onclick="toggleWish()">${isLiked ? '已想要' : '想要'}</button>
+          <button class="btn-chat" onclick="openChat()">聊一聊</button>
+        `;
+      }
       document.getElementById('detail-modal').classList.add('active');
     }
 
@@ -1829,13 +1948,16 @@
       }
       let lastTime = 0;
       const timeGap = 3 * 60 * 1000;
-      box.innerHTML = messages.map(m => {
+      const lastMeIdx = messages.map((m, i) => m.from === 'me' ? i : -1).filter(i => i !== -1).pop();
+      box.innerHTML = messages.map((m, idx) => {
         let timeHtml = '';
         if (m.time - lastTime > timeGap) {
           timeHtml = `<div class="chat-time">${formatChatTime(m.time)}</div>`;
           lastTime = m.time;
         }
         const cls = m.from === 'me' ? 'me' : 'other';
+        const showRead = idx === lastMeIdx && m.read;
+        const readHtml = showRead ? '<div class="chat-read">已读</div>' : '';
         if (m.type === 'contact') {
           const copyBtn = m.from === 'me' ? '' : `<span class="copy-btn" onclick="copyContact('${m.contact || ''}')">复制</span>`;
           return timeHtml + `
@@ -1844,9 +1966,16 @@
               <div style="font-size:13px; opacity:0.9;">${m.contact || ''}</div>
               ${copyBtn}
             </div>
+            ${readHtml}
           `;
         }
-        return timeHtml + `<div class="chat-bubble ${cls}">${escapeHtml(m.text)}</div>`;
+        if (m.type === 'image') {
+          return timeHtml + `
+            <div class="chat-bubble ${cls}"><img src="${m.url}" class="chat-img" onclick="previewImage('${m.url}')" alt=""></div>
+            ${readHtml}
+          `;
+        }
+        return timeHtml + `<div class="chat-bubble ${cls}">${escapeHtml(m.text)}</div>${readHtml}`;
       }).join('');
       box.scrollTop = box.scrollHeight;
     }
@@ -1859,7 +1988,14 @@
 
     function formatChatTime(ts) {
       const d = new Date(ts);
-      return `${d.getMonth() + 1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      const now = new Date();
+      const isToday = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+      const yesterday = new Date(now.getTime() - 86400000);
+      const isYesterday = d.getFullYear() === yesterday.getFullYear() && d.getMonth() === yesterday.getMonth() && d.getDate() === yesterday.getDate();
+      const timeStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+      if (isToday) return `今天 ${timeStr}`;
+      if (isYesterday) return `昨天 ${timeStr}`;
+      return `${d.getMonth() + 1}月${d.getDate()}日 ${timeStr}`;
     }
 
     function copyContact(text) {
@@ -1882,6 +2018,9 @@
         state.currentChat = want;
       }
       document.getElementById('chat-title').textContent = record.peerName;
+      let changed = false;
+      (record.messages || []).forEach(m => { if (m.from === 'me' && !m.read) { m.read = true; changed = true; } });
+      if (changed) saveData();
       renderChatMessages(record.messages || []);
       if (record.unread > 0) {
         record.unread = 0;
@@ -1901,7 +2040,7 @@
         return;
       }
       const now = Date.now();
-      const applyMsg = { from: 'me', text: '申请交换联系方式', time: now, type: 'contact', contact: '已发送申请，等待对方同意' };
+      const applyMsg = { from: 'me', text: '申请交换联系方式', time: now, type: 'contact', contact: '已发送申请，等待对方同意', read: false };
       if (!record) {
         const type = state.currentChat.seller ? 'item' : 'want';
         const title = state.currentChat.title || state.currentChat.seller || '未知';
@@ -1924,6 +2063,7 @@
       saveData();
       updateChatRecord(record);
       setTimeout(() => {
+        record.messages.filter(m => m.from === 'me').forEach(m => m.read = true);
         const contact = getContactInfo(state.currentChat);
         const agreeMsg = { from: 'other', text: '对方已同意交换联系方式', time: Date.now(), type: 'contact', contact };
         record.messages.push(agreeMsg);
@@ -1943,9 +2083,24 @@
       const input = document.getElementById('chat-msg');
       const text = input.value.trim();
       if (!text || !state.currentChat) return;
+      sendMessage({ from: 'me', text, time: Date.now(), type: 'text', read: false });
+      input.value = '';
+    }
+
+    function sendChatImage(e) {
+      const file = e.target.files[0];
+      if (!file || !state.currentChat) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        sendMessage({ from: 'me', url: ev.target.result, time: Date.now(), type: 'image', read: false });
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    function sendMessage(myMsg) {
       let record = findChatRecord();
-      const now = Date.now();
-      const myMsg = { from: 'me', text, time: now, type: 'text' };
+      const now = myMsg.time;
       if (!record) {
         const type = state.currentChat.seller ? 'item' : 'want';
         const title = state.currentChat.title || state.currentChat.seller || '未知';
@@ -1955,20 +2110,20 @@
           peerName: state.currentChat.seller || state.currentChat.user,
           peerCollege: state.currentChat.college,
           title,
-          lastMsg: text,
+          lastMsg: myMsg.type === 'image' ? '[图片]' : myMsg.text,
           lastTime: now,
           unread: 0
         });
       }
       record.messages.push(myMsg);
-      record.lastMsg = text;
+      record.lastMsg = myMsg.type === 'image' ? '[图片]' : myMsg.text;
       record.lastTime = now;
       record.unread = 0;
       renderChatMessages(record.messages);
-      input.value = '';
       saveData();
       updateChatRecord(record);
       setTimeout(() => {
+        record.messages.filter(m => m.from === 'me').forEach(m => m.read = true);
         const reply = { from: 'other', text: '好的，我们可以约个时间面交。', time: Date.now(), type: 'text' };
         record.messages.push(reply);
         record.lastMsg = reply.text;
@@ -1982,6 +2137,14 @@
           updateNavBadge();
         }
       }, 800);
+    }
+
+    function previewImage(url) {
+      const viewer = document.createElement('div');
+      viewer.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:300;';
+      viewer.innerHTML = `<img src="${url}" style="max-width:92%;max-height:92%;border-radius:8px;" onclick="event.stopPropagation()">`;
+      viewer.onclick = () => viewer.remove();
+      document.body.appendChild(viewer);
     }
 
     function findChatRecord() {
@@ -2025,7 +2188,7 @@
       state.listTab = '全部';
       const titles = { 'my-items': '我的发布', 'my-wants': '我的求购', 'my-likes': '我想要的' };
       document.getElementById('list-title').textContent = titles[type];
-      const tabs = type === 'my-items' ? ['全部', '在售', '已售出'] : ['全部'];
+      const tabs = type === 'my-items' ? ['全部', '在售', '已售出', '已下架'] : ['全部'];
       document.getElementById('list-tabs').innerHTML = tabs.map(t => `<span class="sub-tab ${t === state.listTab ? 'active' : ''}" onclick="setListTab('${t}')">${t}</span>`).join('');
       renderList();
       document.getElementById('list-modal').classList.add('active');
@@ -2033,8 +2196,9 @@
 
     function setListTab(tab) {
       state.listTab = tab;
-      document.querySelectorAll('#list-tabs .sub-tab').forEach(t => t.classList.remove('active'));
-      event.target.classList.add('active');
+      document.querySelectorAll('#list-tabs .sub-tab').forEach(t => {
+        t.classList.toggle('active', t.textContent === tab);
+      });
       renderList();
     }
 
@@ -2043,8 +2207,9 @@
       let data = [];
       if (state.listType === 'my-items') {
         data = state.items.filter(i => i.seller === currentUser.name);
-        if (state.listTab === '在售') data = data.filter(i => !i.sold);
-        if (state.listTab === '已售出') data = data.filter(i => i.sold);
+        if (state.listTab === '在售') data = data.filter(i => i.status === 'active');
+        if (state.listTab === '已售出') data = data.filter(i => i.status === 'sold');
+        if (state.listTab === '已下架') data = data.filter(i => i.status === 'offline');
       } else if (state.listType === 'my-wants') {
         data = state.wanted.filter(w => w.user === currentUser.name);
       } else if (state.listType === 'my-likes') {
@@ -2071,8 +2236,10 @@
             </div>
           `;
         }
+        const statusBadge = item.status === 'sold' ? '<span class="item-status sold">已售出</span>' : item.status === 'offline' ? '<span class="item-status offline">已下架</span>' : '';
         return `
-          <div class="list-card">
+          <div class="list-card" style="position:relative;">
+            ${statusBadge}
             <div class="img">${item.images && item.images.length ? `<img src="${item.images[0]}" alt="">` : ''}</div>
             <div class="info">
               <div class="title">${item.title}</div>
@@ -2080,9 +2247,11 @@
               <div class="meta">${item.category} · ${item.location} · ${formatTime(item.time)}</div>
               ${state.listType === 'my-items' ? `
                 <div class="actions">
+                  ${item.status !== 'active' ? `<button onclick="event.stopPropagation(); setItemStatus(${item.id}, 'active')">重新上架</button>` : ''}
+                  ${item.status !== 'sold' ? `<button onclick="event.stopPropagation(); setItemStatus(${item.id}, 'sold')">标记售出</button>` : ''}
+                  ${item.status !== 'offline' ? `<button onclick="event.stopPropagation(); setItemStatus(${item.id}, 'offline')">下架</button>` : ''}
                   <button onclick="event.stopPropagation(); openEditItem(${item.id})">编辑</button>
-                  <button onclick="toggleSold(${item.id})">${item.sold ? '标记在售' : '标记售出'}</button>
-                  <button class="danger" onclick="deleteItem(${item.id})">删除</button>
+                  <button class="danger" onclick="event.stopPropagation(); deleteItem(${item.id})">删除</button>
                 </div>
               ` : ''}
             </div>
@@ -2099,11 +2268,29 @@
       renderWanted();
     }
 
+    function setItemStatus(id, status) {
+      const item = state.items.find(i => i.id === id);
+      if (!item) return;
+      item.status = status;
+      item.sold = status === 'sold';
+      saveData();
+      renderHome();
+      renderList();
+      updateProfileStats();
+      if (state.currentItem && state.currentItem.id === id) {
+        state.currentItem = item;
+        openDetail(id);
+      }
+      showToast(status === 'sold' ? '已标记为售出' : status === 'offline' ? '已下架' : '已重新上架');
+    }
+
     function toggleSold(id) {
       const item = state.items.find(i => i.id === id);
       if (item) {
         item.sold = !item.sold;
+        item.status = item.sold ? 'sold' : 'active';
         saveData();
+        renderHome();
         renderList();
         updateProfileStats();
       }
@@ -2216,10 +2403,50 @@
     }
 
     function updateProfileStats() {
-      const selling = state.items.filter(i => i.seller === currentUser.name && !i.sold).length;
-      const deal = state.items.filter(i => i.seller === currentUser.name && i.sold).length;
+      const selling = state.items.filter(i => i.seller === currentUser.name && i.status === 'active').length;
+      const deal = state.items.filter(i => i.seller === currentUser.name && i.status === 'sold').length;
       document.getElementById('stat-selling').textContent = selling;
       document.getElementById('stat-deal').textContent = deal;
+      document.getElementById('profile-campus').textContent = state.campus + ' ›';
+      document.querySelector('.profile-school').textContent = state.campus + ' · ' + currentUser.college;
+    }
+
+    function renderCampus() {
+      document.getElementById('home-campus').textContent = state.campus;
+      const container = document.getElementById('campus-options');
+      container.innerHTML = campuses.map(c => `
+        <div class="campus-option ${c === state.campus ? 'active' : ''}" onclick="selectCampus('${c}')">
+          <span>${c}</span>
+          <span class="check">✓</span>
+        </div>
+      `).join('') + '<div class="campus-hint">选择后只展示该校区的商品与求购</div>';
+    }
+
+    function openCampusModal(firstTime) {
+      renderCampus();
+      const modal = document.getElementById('campus-modal');
+      modal.dataset.firstTime = firstTime ? '1' : '';
+      modal.classList.add('active');
+    }
+
+    function selectCampus(campus) {
+      state.campus = campus;
+      currentUser.school = campus;
+      saveData();
+      renderCampus();
+      renderHome();
+      renderWanted();
+      updateProfileStats();
+      document.getElementById('home-campus').textContent = campus;
+      const modal = document.getElementById('campus-modal');
+      if (modal.dataset.firstTime === '1') {
+        seedData();
+        saveData();
+        renderHome();
+        renderWanted();
+      }
+      closeModal('campus-modal');
+      showToast('已切换到 ' + campus);
     }
 
     function showToast(msg) {
