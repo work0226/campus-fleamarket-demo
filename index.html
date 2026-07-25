@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>校园闲置 - Demo</title>
+  <style>
+    :root {
+      --accent: #059669;
+      --accent-dark: #047857;
+      --accent-soft: rgba(5, 150, 105, 0.08);
+      --bg: #f8fafc;
+      --bg2: #ffffff;
+      --ink: #1e293b;
+      --muted: #64748b;
+      --rule: #e2e8f0;
+      --danger: #ef4444;
+      --radius: 12px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      overflow: hidden;
+    }
+    #app {
+      max-width: 480px;
+      margin: 0 auto;
+      height: 100%;
+      background: var(--bg);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .screen {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 80px;
+      display: none;
+      scrollbar-width: none;
+    }
+    .screen.active { display: block; }
+    .screen::-webkit-scrollbar { display: none; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topbar h1 { font-size: 18px; font-weight: 700; }
+    .topbar .campus {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 600;
+      background: var(--accent-soft);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .search-box {
+      margin: 12px 16px;
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .search-box input {
+      border: none;
+      outline: none;
+      flex: 1;
+      font-size: 14px;
+      background: transparent;
+      color: var(--ink);
+    }
+
+    .tags {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 12px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tags::-webkit-scrollbar { display: none; }
+    .tag {
+      white-space: nowrap;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .tag.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      padding: 0 16px;
+    }
+    .item-card {
+      background: var(--bg2);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .item-card:active { transform: scale(0.98); }
+    .item-card .img {
+      height: 140px;
+      background: var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 12px;
+      overflow: hidden;
+    }
+    .item-card .img img { width: 100%; height: 100%; object-fit: cover; }
+    .item-card .info { padding: 10px; }
+    .item-card .title {
+      font-size: 14px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-bottom: 4px;
+    }
+    .item-card .price { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .item-card .meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .item-card .badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon {
+      width: 80px;
+      height: 80px;
+      background: var(--accent-soft);
+      border-radius: 50%;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 12px;
+      z-index: 20;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 4px 16px;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-item .icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .fab {
+      position: absolute;
+      bottom: 76px;
+      right: 16px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 4px 16px rgba(5,150,105,0.35);
+      cursor: pointer;
+      z-index: 20;
+    }
+    .fab:active { transform: scale(0.95); }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      font-size: 15px;
+      background: var(--bg2);
+      font-family: inherit;
+    }
+    .form-group textarea { min-height: 90px; resize: vertical; }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .photo-upload {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .photo-box {
+      width: 80px;
+      height: 80px;
+      border: 2px dashed var(--rule);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      font-size: 24px;
+      background: var(--bg2);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-box .remove {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      background: var(--danger);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .photo-upload input { display: none; }
+
+    .trade-options { display: flex; gap: 8px; flex-wrap: wrap; }
+    .trade-option {
+      padding: 8px 14px;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--muted);
+      cursor: pointer;
+      background: var(--bg2);
+    }
+    .trade-option.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .btn-primary:active { background: var(--accent-dark); }
+    .btn-primary:disabled { background: var(--muted); cursor: not-allowed; }
+
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      padding: 16px;
+      padding-bottom: 8px;
+    }
+
+    .wanted-card {
+      background: var(--bg2);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin: 0 16px 12px;
+      box-shadow: var(--shadow);
+    }
+    .wanted-card .title { font-weight: 700; margin-bottom: 6px; }
+    .wanted-card .info {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .wanted-card .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .wanted-card .user { font-size: 12px; color: var(--muted); }
+    .wanted-card .btn-have {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .profile-header {
+      background: linear-gradient(135deg, var(--accent), #10b981);
+      color: #fff;
+      padding: 32px 16px;
+      text-align: center;
+    }
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      margin: 0 auto 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .profile-name { font-size: 18px; font-weight: 700; }
+    .profile-school { font-size: 13px; opacity: 0.9; margin-top: 4px; }
+    .profile-stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-top: 16px;
+    }
+    .profile-stats div { text-align: center; }
+    .profile-stats .num { font-size: 20px; font-weight: 700; }
+    .profile-stats .label { font-size: 12px; opacity: 0.85; }
+    .menu-list {
+      background: var(--bg2);
+      margin: 16px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--rule);
+      cursor: pointer;
+    }
+    .menu-item:last-child { border-bottom: none; }
+    .menu-item .left { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    .menu-item .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .menu-item .arrow { color: var(--muted); }
+
+    .modal {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      z-index: 100;
+      flex-direction: column;
+    }
+    .modal.active { display: flex; }
+    .modal-header {
+      background: var(--bg2);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .modal-header .back { font-size: 20px; color: var(--muted); cursor: pointer; }
+    .modal-header h2 { font-size: 17px; flex: 1; text-align: center; margin-right: 28px; }
+    .modal-body { flex: 1; overflow-y: auto; }
+
+    .detail-gallery {
+      height: 320px;
+      background: var(--rule);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--muted);
+      overflow: hidden;
+    }
+    .detail-gallery img { width: 100%; height: 100%; object-fit: cover; }
+    .detail-info { padding: 16px; }
+    .detail-price { font-size: 28px; font-weight: 700; color: var(--accent); }
+    .detail-title { font-size: 18px; font-weight: 700; margin: 8px 0; }
+    .detail-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .detail-tags span {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .seller-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg2);
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--rule);
+      margin-bottom: 16px;
+    }
+    .seller-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-weight: 700;
+    }
+    .seller-info { flex: 1; }
+    .seller-info .name { font-weight: 700; }
+    .seller-info .badge {
+      font-size: 11px;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-top: 2px;
+    }
+    .detail-desc { color: var(--muted); font-size: 14px; line-height: 1.7; }
+    .detail-action {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg2);
+      border-top: 1px solid var(--rule);
+      padding: 12px 16px;
+      display: flex;
+      gap: 12px;
+    }
+    .detail-action .btn-wish {
+      padding: 12px 18px;
+      border: 1px solid var(--rule);
+      background: var(--bg2);
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .detail-action .btn-wish.active {
+      color: var(--accent);
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .detail-action .btn-chat {
+      flex: 1;
+      padding: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .chat-box {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .chat-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .chat-bubble.me {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .chat-bubble.other {
+      align-self: flex-start;
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      border-bottom-left-radius: 4px;
+    }
+    .chat-input {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg2);
+      border-top: 1px solid var(--rule);
+      padding: 10px 12px 16px;
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input input {
+      flex: 1;
+      border: 1px solid var(--rule);
+      border-radius: 999px;
+      padding: 10px 14px;
+      outline: none;
+      font-size: 14px;
+    }
+    .chat-input button {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 0 18px;
+      font-weight: 600;
+    }
+
+    .list-page { padding: 16px; }
+    .list-card {
+      display: flex;
+      gap: 12px;
+      background: var(--bg2);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+    .list-card .img {
+      width: 80px;
+      height: 80px;
+      border-radius: 8px;
+      background: var(--rule);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .list-card .img img { width: 100%; height: 100%; object-fit: cover; }
+    .list-card .info { flex: 1; }
+    .list-card .title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .list-card .price { color: var(--accent); font-weight: 700; }
+    .list-card .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .list-card .actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .list-card .actions button {
+      font-size: 12px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--rule);
+      background: var(--bg2);
+      cursor: pointer;
+    }
+    .list-card .actions .danger { color: var(--danger); border-color: rgba(239,68,68,0.3); }
+
+    .sub-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 12px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .sub-tab {
+      font-size: 14px;
+      color: var(--muted);
+      padding: 6px 12px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .sub-tab.active { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 999px;
+      font-size: 14px;
+      z-index: 200;
+      display: none;
+    }
+    .toast.show { display: block; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 首页 -->
+    <div class="screen active" id="screen-home">
+      <div class="topbar">
+        <span class="campus">松江校区</span>
+        <h1>校园闲置</h1>
+        <span style="color: var(--muted); font-size: 13px;">消息</span>
+      </div>
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" id="home-search" placeholder="搜索教材、电器、宿舍好物…" oninput="filterItems()">
+      </div>
+      <div class="tags" id="home-tags"></div>
+      <div class="items-grid" id="home-items"></div>
+      <div class="empty-state" id="home-empty" style="display:none;">
+        <div class="icon">📦</div>
+        <p>该分类下暂无物品</p>
+      </div>
+    </div>
+
+    <!-- 求购 -->
+    <div class="screen" id="screen-wanted">
+      <div class="topbar"><h1>求购广场</h1></div>
+      <div class="tags" id="wanted-tags"></div>
+      <div id="wanted-list"></div>
+      <div class="empty-state" id="wanted-empty" style="display:none;">
+        <div class="icon">📝</div>
+        <p>暂无求购信息</p>
+      </div>
+    </div>
+
+    <!-- 发布 -->
+    <div class="screen" id="screen-publish">
+      <div class="topbar"><h1>发布闲置</h1></div>
+      <div style="padding: 16px;">
+        <div class="form-group">
+          <label>上传图片</label>
+          <div class="photo-upload" id="photo-upload">
+            <div class="photo-box" onclick="document.getElementById('photo-input').click()">+</div>
+            <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(event)">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>标题</label>
+          <input type="text" id="pub-title" placeholder="例：毕业出小米台灯，9成新">
+        </div>
+        <div class="form-group">
+          <label>分类</label>
+          <select id="pub-category"></select>
+        </div>
+        <div class="form-group">
+          <label>价格（元）</label>
+          <input type="number" id="pub-price" placeholder="0 表示免费送">
+        </div>
+        <div class="form-group">
+          <label>交易方式</label>
+          <div class="trade-options" id="pub-trade"></div>
+        </div>
+        <div class="form-group">
+          <label>交易地点</label>
+          <input type="text" id="pub-location" placeholder="例：8号楼楼下 / 图书馆">
+        </div>
+        <div class="form-group">
+          <label>物品描述</label>
+          <textarea id="pub-desc" placeholder="描述一下物品成色、购买渠道、使用情况等"></textarea>
+        </div>
+        <button class="btn-primary" onclick="publishItem()">立即发布</button>
+      </div>
+    </div>
+
+    <!-- 我的 -->
+    <div class="screen" id="screen-profile">
+      <div class="profile-header">
+        <div class="profile-avatar">陈</div>
+        <div class="profile-name">陈同学</div>
+        <div class="profile-school">松江校区 · 电子信息学院</div>
+        <div class="profile-stats">
+          <div><div class="num" id="stat-deal">0</div><div class="label">成交</div></div>
+          <div><div class="num">4.9</div><div class="label">信用分</div></div>
+          <div><div class="num" id="stat-selling">0</div><div class="label">在售</div></div>
+        </div>
+      </div>
+      <div class="menu-list">
+        <div class="menu-item" onclick="showListPage('my-items')">
+          <div class="left"><span class="dot"></span>我的发布</div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="showListPage('my-wants')">
+          <div class="left"><span class="dot"></span>我的求购</div>
+          <span class="arrow">›</span>
+        </div>
+        <div class="menu-item" onclick="showListPage('my-likes')">
+          <div class="left"><span class="dot"></span>我想要的</div>
+          <span class="arrow">›</span>
+        </div>
+      </div>
+      <div class="menu-list">
+        <div class="menu-item">
+          <div class="left"><span class="dot"></span>校园认证</div>
+          <span style="color: var(--accent); font-size: 13px; font-weight: 600;">已认证 ›</span>
+        </div>
+        <div class="menu-item">
+          <div class="left"><span class="dot"></span>设置</div>
+          <span class="arrow">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="bottom-nav">
+      <div class="nav-item active" data-screen="home">
+        <div class="icon">🏠</div>
+        <span>首页</span>
+      </div>
+      <div class="nav-item" data-screen="wanted">
+        <div class="icon">📝</div>
+        <span>求购</span>
+      </div>
+      <div class="nav-item" data-screen="publish">
+        <div class="icon">➕</div>
+        <span>发布</span>
+      </div>
+      <div class="nav-item" data-screen="profile">
+        <div class="icon">👤</div>
+        <span>我的</span>
+      </div>
+    </div>
+
+    <!-- 悬浮发布按钮（首页） -->
+    <div class="fab" id="home-fab" onclick="switchTab('publish')" style="display:none;">+</div>
+
+    <!-- 商品详情弹窗 -->
+    <div class="modal" id="detail-modal">
+      <div class="modal-header">
+        <span class="back" onclick="closeModal('detail-modal')">‹</span>
+        <h2>商品详情</h2>
+      </div>
+      <div class="modal-body">
+        <div class="detail-gallery" id="detail-gallery">暂无图片</div>
+        <div class="detail-info">
+          <div class="detail-price" id="detail-price"></div>
+          <div class="detail-title" id="detail-title"></div>
+          <div class="detail-tags" id="detail-tags"></div>
+          <div class="seller-card">
+            <div class="seller-avatar" id="seller-avatar">陈</div>
+            <div class="seller-info">
+              <div class="name" id="seller-name">陈同学</div>
+              <span class="badge">已认证 · 电子信息学院</span>
+            </div>
+          </div>
+          <h3 style="font-size: 15px; margin-bottom: 8px;">物品描述</h3>
+          <p class="detail-desc" id="detail-desc"></p>
+        </div>
+      </div>
+      <div class="detail-action">
+        <button class="btn-wish" id="detail-wish" onclick="toggleWish()">想要</button>
+        <button class="btn-chat" onclick="openChat()">聊一聊</button>
+      </div>
+    </div>
+
+    <!-- 聊天弹窗 -->
+    <div class="modal" id="chat-modal">
+      <div class="modal-header">
+        <span class="back" onclick="closeModal('chat-modal')">‹</span>
+        <h2 id="chat-title">聊一聊</h2>
+      </div>
+      <div class="modal-body" id="chat-body">
+        <div class="chat-box" id="chat-box"></div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chat-msg" placeholder="输入消息…" onkeydown="if(event.key==='Enter')sendChat()">
+        <button onclick="sendChat()">发送</button>
+      </div>
+    </div>
+
+    <!-- 列表页弹窗 -->
+    <div class="modal" id="list-modal">
+      <div class="modal-header">
+        <span class="back" onclick="closeModal('list-modal')">‹</span>
+        <h2 id="list-title">我的发布</h2>
+      </div>
+      <div class="modal-body" style="background: var(--bg);">
+        <div class="sub-tabs" id="list-tabs"></div>
+        <div class="list-page" id="list-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const categories = ['全部', '教材资料', '电子数码', '宿舍生活', '美妆护肤', '衣物鞋包', '运动户外', '其他'];
+    const tradeOptions = ['自提', '送货上门', '当面交易'];
+    const currentUser = { name: '陈同学', school: '松江校区', college: '电子信息学院', avatar: '陈' };
+
+    let state = {
+      activeTab: 'home',
+      homeTag: '全部',
+      wantedTag: '全部',
+      items: [],
+      wanted: [],
+      likes: [],
+      photos: [],
+      currentItem: null,
+      currentChat: null,
+      listType: 'my-items',
+      listTab: '全部'
+    };
+
+    function init() {
+      loadData();
+      if (state.items.length === 0) {
+        seedData();
+        saveData();
+      }
+      renderHomeTags();
+      renderWantedTags();
+      renderCategories();
+      renderTradeOptions();
+      renderHome();
+      renderWanted();
+      updateProfileStats();
+      bindNav();
+    }
+
+    function seedData() {
+      state.items = [
+        { id: 1, title: '线性代数教材 99新', price: 12, category: '教材资料', location: '13号楼', trade: ['自提'], desc: '上学期买的，基本没翻过，成色很新。', images: [], seller: '张同学', college: '数学学院', time: Date.now() - 7200000, sold: false },
+        { id: 2, title: '小米台灯 毕业出', price: 35, category: '宿舍生活', location: '8号楼楼下', trade: ['自提', '当面交易'], desc: '去年双十一购入，三档亮度，功能完好。', images: [], seller: '陈同学', college: '电子信息学院', time: Date.now() - 18000000, sold: false },
+        { id: 3, title: '计算器 fx-991', price: 45, category: '电子数码', location: '图书馆', trade: ['自提'], desc: '考试用了一学期，电池还有电。', images: [], seller: '李同学', college: '理学院', time: Date.now() - 86400000, sold: false },
+        { id: 4, title: '瑜伽垫 几乎全新', price: 18, category: '运动户外', location: '5号楼', trade: ['自提'], desc: '买回来用了两次就闲置了。', images: [], seller: '王同学', college: '管理学院', time: Date.now() - 86400000, sold: false },
+        { id: 5, title: 'AirPods 2 右耳', price: 150, category: '电子数码', location: '21号楼', trade: ['当面交易'], desc: '左耳丢了，出右耳和充电仓。', images: [], seller: '赵同学', college: '外语学院', time: Date.now() - 172800000, sold: false },
+        { id: 6, title: '考研英语词汇书', price: 8, category: '教材资料', location: '3号楼', trade: ['自提'], desc: '划了一些重点，不影响使用。', images: [], seller: '刘同学', college: '文学院', time: Date.now() - 172800000, sold: false }
+      ];
+      state.wanted = [
+        { id: 1, title: '高等数学（同济第七版）上下册', budget: 20, condition: '8成新以上', category: '教材资料', user: '张同学', college: '计算机学院', time: Date.now() - 10800000 },
+        { id: 2, title: '床上桌，带抽屉款', budget: 50, condition: '无明显损坏', category: '宿舍生活', user: '李同学', college: '管理学院', time: Date.now() - 18000000 },
+        { id: 3, title: '四级真题卷（近5年）', budget: 10, condition: '有答案解析', category: '教材资料', user: '王同学', college: '外语学院', time: Date.now() - 86400000 }
+      ];
+    }
+
+    function loadData() {
+      try {
+        const saved = localStorage.getItem('campusFleaMarket');
+        if (saved) Object.assign(state, JSON.parse(saved));
+      } catch (e) { console.log('loadData error', e); }
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem('campusFleaMarket', JSON.stringify({
+          items: state.items,
+          wanted: state.wanted,
+          likes: state.likes
+        }));
+      } catch (e) { console.log('saveData error', e); }
+    }
+
+    function bindNav() {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => switchTab(item.dataset.screen));
+      });
+    }
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + tab).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelector('.nav-item[data-screen="' + tab + '"]').classList.add('active');
+      document.getElementById('home-fab').style.display = tab === 'home' ? 'flex' : 'none';
+      if (tab === 'profile') updateProfileStats();
+      if (tab === 'home') renderHome();
+      if (tab === 'wanted') renderWanted();
+    }
+
+    function renderHomeTags() {
+      const container = document.getElementById('home-tags');
+      container.innerHTML = categories.map(c => `<span class="tag ${c === state.homeTag ? 'active' : ''}" onclick="setHomeTag('${c}')">${c}</span>`).join('');
+    }
+
+    function setHomeTag(tag) {
+      state.homeTag = tag;
+      renderHomeTags();
+      renderHome();
+    }
+
+    function renderWantedTags() {
+      const container = document.getElementById('wanted-tags');
+      container.innerHTML = categories.map(c => `<span class="tag ${c === state.wantedTag ? 'active' : ''}" onclick="setWantedTag('${c}')">${c}</span>`).join('');
+    }
+
+    function setWantedTag(tag) {
+      state.wantedTag = tag;
+      renderWantedTags();
+      renderWanted();
+    }
+
+    function renderCategories() {
+      const select = document.getElementById('pub-category');
+      select.innerHTML = categories.slice(1).map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    function renderTradeOptions() {
+      const container = document.getElementById('pub-trade');
+      container.innerHTML = tradeOptions.map((t, i) => `<span class="trade-option ${i === 0 ? 'active' : ''}" data-value="${t}" onclick="toggleTrade(this)">${t}</span>`).join('');
+    }
+
+    function toggleTrade(el) {
+      el.classList.toggle('active');
+      if (document.querySelectorAll('#pub-trade .active').length === 0) el.classList.add('active');
+    }
+
+    function filterItems() {
+      renderHome();
+    }
+
+    function renderHome() {
+      const keyword = document.getElementById('home-search').value.toLowerCase();
+      const filtered = state.items.filter(item => {
+        const matchTag = state.homeTag === '全部' || item.category === state.homeTag;
+        const matchKw = item.title.toLowerCase().includes(keyword) || item.desc.toLowerCase().includes(keyword);
+        return matchTag && matchKw && !item.sold;
+      });
+      const container = document.getElementById('home-items');
+      const empty = document.getElementById('home-empty');
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      container.innerHTML = filtered.map(item => `
+        <div class="item-card" onclick="openDetail(${item.id})">
+          <div class="img">${item.images.length ? `<img src="${item.images[0]}" alt="">` : '[暂无图片]'}</div>
+          <div class="info">
+            <div class="title">${item.title}</div>
+            <div class="price">¥${item.price}</div>
+            <div class="meta">${item.location} · ${formatTime(item.time)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderWanted() {
+      const filtered = state.wanted.filter(w => state.wantedTag === '全部' || w.category === state.wantedTag);
+      const container = document.getElementById('wanted-list');
+      const empty = document.getElementById('wanted-empty');
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      container.innerHTML = filtered.map(w => `
+        <div class="wanted-card">
+          <div class="title">求购：${w.title}</div>
+          <div class="info">预算：≤ ¥${w.budget} · 期望：${w.condition}</div>
+          <div class="footer">
+            <span class="user">${w.user} · ${w.college} · ${formatTime(w.time)}</span>
+            <button class="btn-have" onclick="contactWant(${w.id}, this)">我有</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function handlePhotos(e) {
+      const files = Array.from(e.target.files);
+      if (state.photos.length + files.length > 9) {
+        showToast('最多上传 9 张图片');
+        return;
+      }
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          state.photos.push(ev.target.result);
+          renderPhotos();
+        };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = '';
+    }
+
+    function renderPhotos() {
+      const container = document.getElementById('photo-upload');
+      let html = state.photos.map((p, i) => `
+        <div class="photo-box filled">
+          <img src="${p}" alt="">
+          <span class="remove" onclick="event.stopPropagation(); removePhoto(${i})">×</span>
+        </div>
+      `).join('');
+      if (state.photos.length < 9) {
+        html += `<div class="photo-box" onclick="document.getElementById('photo-input').click()">+</div>`;
+      }
+      container.innerHTML = html + `<input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(event)">`;
+    }
+
+    function removePhoto(i) {
+      state.photos.splice(i, 1);
+      renderPhotos();
+    }
+
+    function publishItem() {
+      const title = document.getElementById('pub-title').value.trim();
+      const price = parseFloat(document.getElementById('pub-price').value);
+      const location = document.getElementById('pub-location').value.trim();
+      const desc = document.getElementById('pub-desc').value.trim();
+      const category = document.getElementById('pub-category').value;
+      const trade = Array.from(document.querySelectorAll('#pub-trade .active')).map(el => el.dataset.value);
+
+      if (!title) return showToast('请填写标题');
+      if (isNaN(price) || price < 0) return showToast('请填写价格');
+      if (!location) return showToast('请填写交易地点');
+      if (trade.length === 0) return showToast('请至少选择一种交易方式');
+
+      const item = {
+        id: Date.now(),
+        title,
+        price,
+        category,
+        location,
+        trade,
+        desc,
+        images: [...state.photos],
+        seller: currentUser.name,
+        college: currentUser.college,
+        time: Date.now(),
+        sold: false
+      };
+      state.items.unshift(item);
+      state.photos = [];
+      saveData();
+      resetPublishForm();
+      showToast('发布成功');
+      switchTab('home');
+    }
+
+    function resetPublishForm() {
+      document.getElementById('pub-title').value = '';
+      document.getElementById('pub-price').value = '';
+      document.getElementById('pub-location').value = '';
+      document.getElementById('pub-desc').value = '';
+      renderPhotos();
+      renderTradeOptions();
+    }
+
+    function openDetail(id) {
+      const item = state.items.find(i => i.id === id);
+      if (!item) return;
+      state.currentItem = item;
+      document.getElementById('detail-gallery').innerHTML = item.images.length ? `<img src="${item.images[0]}" alt="">` : '暂无图片';
+      document.getElementById('detail-price').textContent = item.price === 0 ? '免费送' : `¥${item.price}`;
+      document.getElementById('detail-title').textContent = item.title;
+      document.getElementById('detail-tags').innerHTML = `
+        <span>${item.category}</span>
+        <span>${item.location}</span>
+        <span>${item.trade.join(' / ')}</span>
+        <span>${formatTime(item.time)}</span>
+      `;
+      document.getElementById('seller-name').textContent = item.seller;
+      document.getElementById('seller-avatar').textContent = item.seller[0];
+      document.getElementById('detail-desc').textContent = item.desc || '暂无描述';
+      const wishBtn = document.getElementById('detail-wish');
+      const isLiked = state.likes.includes(id);
+      wishBtn.textContent = isLiked ? '已想要' : '想要';
+      wishBtn.classList.toggle('active', isLiked);
+      document.getElementById('detail-modal').classList.add('active');
+    }
+
+    function toggleWish() {
+      if (!state.currentItem) return;
+      const id = state.currentItem.id;
+      const idx = state.likes.indexOf(id);
+      if (idx === -1) state.likes.push(id);
+      else state.likes.splice(idx, 1);
+      saveData();
+      openDetail(id);
+      updateProfileStats();
+    }
+
+    function openChat() {
+      if (!state.currentItem) return;
+      const item = state.currentItem;
+      state.currentChat = item;
+      document.getElementById('chat-title').textContent = item.seller;
+      const box = document.getElementById('chat-box');
+      box.innerHTML = `
+        <div class="chat-bubble other">你好，我对你的「${item.title}」感兴趣，请问还在吗？</div>
+      `;
+      document.getElementById('chat-modal').classList.add('active');
+    }
+
+    function sendChat() {
+      const input = document.getElementById('chat-msg');
+      const text = input.value.trim();
+      if (!text) return;
+      const box = document.getElementById('chat-box');
+      box.innerHTML += `<div class="chat-bubble me">${text}</div>`;
+      input.value = '';
+      box.scrollTop = box.scrollHeight;
+      setTimeout(() => {
+        box.innerHTML += `<div class="chat-bubble other">好的，我们可以约个时间面交。</div>`;
+        box.scrollTop = box.scrollHeight;
+      }, 800);
+    }
+
+    function contactWant(id, btn) {
+      btn.textContent = '已通知';
+      btn.style.background = 'var(--muted)';
+      setTimeout(() => {
+        btn.textContent = '我有';
+        btn.style.background = '';
+      }, 1500);
+      showToast('已向对方发送意向');
+    }
+
+    function showListPage(type) {
+      state.listType = type;
+      state.listTab = '全部';
+      const titles = { 'my-items': '我的发布', 'my-wants': '我的求购', 'my-likes': '我想要的' };
+      document.getElementById('list-title').textContent = titles[type];
+      const tabs = type === 'my-items' ? ['全部', '在售', '已售出'] : ['全部'];
+      document.getElementById('list-tabs').innerHTML = tabs.map(t => `<span class="sub-tab ${t === state.listTab ? 'active' : ''}" onclick="setListTab('${t}')">${t}</span>`).join('');
+      renderList();
+      document.getElementById('list-modal').classList.add('active');
+    }
+
+    function setListTab(tab) {
+      state.listTab = tab;
+      document.querySelectorAll('#list-tabs .sub-tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      renderList();
+    }
+
+    function renderList() {
+      const container = document.getElementById('list-content');
+      let data = [];
+      if (state.listType === 'my-items') {
+        data = state.items.filter(i => i.seller === currentUser.name);
+        if (state.listTab === '在售') data = data.filter(i => !i.sold);
+        if (state.listTab === '已售出') data = data.filter(i => i.sold);
+      } else if (state.listType === 'my-wants') {
+        data = state.wanted.filter(w => w.user === currentUser.name);
+      } else if (state.listType === 'my-likes') {
+        data = state.items.filter(i => state.likes.includes(i.id));
+      }
+
+      if (data.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无数据</p></div>';
+        return;
+      }
+
+      container.innerHTML = data.map(item => `
+        <div class="list-card">
+          <div class="img">${item.images && item.images.length ? `<img src="${item.images[0]}" alt="">` : ''}</div>
+          <div class="info">
+            <div class="title">${item.title}</div>
+            <div class="price">${item.price === 0 ? '免费送' : '¥' + item.price}</div>
+            <div class="meta">${item.category} · ${item.location} · ${formatTime(item.time)}</div>
+            ${state.listType === 'my-items' ? `
+              <div class="actions">
+                <button onclick="toggleSold(${item.id})">${item.sold ? '标记在售' : '标记售出'}</button>
+                <button class="danger" onclick="deleteItem(${item.id})">删除</button>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function toggleSold(id) {
+      const item = state.items.find(i => i.id === id);
+      if (item) {
+        item.sold = !item.sold;
+        saveData();
+        renderList();
+        updateProfileStats();
+      }
+    }
+
+    function deleteItem(id) {
+      if (!confirm('确定删除这条发布吗？')) return;
+      state.items = state.items.filter(i => i.id !== id);
+      state.likes = state.likes.filter(l => l !== id);
+      saveData();
+      renderList();
+      renderHome();
+      updateProfileStats();
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+    function updateProfileStats() {
+      const selling = state.items.filter(i => i.seller === currentUser.name && !i.sold).length;
+      const deal = state.items.filter(i => i.seller === currentUser.name && i.sold).length;
+      document.getElementById('stat-selling').textContent = selling;
+      document.getElementById('stat-deal').textContent = deal;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    function formatTime(ts) {
+      const diff = Date.now() - ts;
+      if (diff < 60000) return '刚刚';
+      if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+      if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+      if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+      return new Date(ts).toLocaleDateString();
+    }
+
+    init();
+  </script>
+</body>
+</html>
