@@ -689,40 +689,79 @@
 
     <!-- 发布 -->
     <div class="screen" id="screen-publish">
-      <div class="topbar"><h1>发布闲置</h1></div>
+      <div class="topbar"><h1>发布</h1></div>
+      <div class="sub-tabs" style="margin: 12px 16px 0; border-bottom: none;">
+        <span class="sub-tab active" id="tab-item" onclick="setPublishMode('item')">发布闲置</span>
+        <span class="sub-tab" id="tab-want" onclick="setPublishMode('want')">发布求购</span>
+      </div>
       <div style="padding: 16px;">
-        <div class="form-group">
-          <label>上传图片</label>
-          <div class="photo-upload" id="photo-upload">
-            <div class="photo-box" onclick="document.getElementById('photo-input').click()">+</div>
-            <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(event)">
+        <!-- 发布闲置 -->
+        <div id="form-item">
+          <div class="form-group">
+            <label>上传图片</label>
+            <div class="photo-upload" id="photo-upload">
+              <div class="photo-box" onclick="document.getElementById('photo-input').click()">+</div>
+              <input type="file" id="photo-input" accept="image/*" multiple onchange="handlePhotos(event)">
+            </div>
           </div>
+          <div class="form-group">
+            <label>标题</label>
+            <input type="text" id="pub-title" placeholder="例：毕业出小米台灯，9成新">
+          </div>
+          <div class="form-group">
+            <label>分类</label>
+            <select id="pub-category"></select>
+          </div>
+          <div class="form-group">
+            <label>价格（元）</label>
+            <input type="number" id="pub-price" placeholder="0 表示免费送">
+          </div>
+          <div class="form-group">
+            <label>交易方式</label>
+            <div class="trade-options" id="pub-trade"></div>
+          </div>
+          <div class="form-group">
+            <label>交易地点</label>
+            <input type="text" id="pub-location" placeholder="例：8号楼楼下 / 图书馆">
+          </div>
+          <div class="form-group">
+            <label>物品描述</label>
+            <textarea id="pub-desc" placeholder="描述一下物品成色、购买渠道、使用情况等"></textarea>
+          </div>
+          <button class="btn-primary" onclick="publishItem()">立即发布</button>
         </div>
-        <div class="form-group">
-          <label>标题</label>
-          <input type="text" id="pub-title" placeholder="例：毕业出小米台灯，9成新">
+
+        <!-- 发布求购 -->
+        <div id="form-want" style="display:none;">
+          <div class="form-group">
+            <label>想要求购的物品</label>
+            <input type="text" id="want-title" placeholder="例：高等数学（同济第七版）上下册">
+          </div>
+          <div class="form-group">
+            <label>分类</label>
+            <select id="want-category"></select>
+          </div>
+          <div class="form-group">
+            <label>预算上限（元）</label>
+            <input type="number" id="want-budget" placeholder="可不填">
+          </div>
+          <div class="form-group">
+            <label>期望成色</label>
+            <select id="want-condition">
+              <option value="不限制">不限制</option>
+              <option value="全新">全新</option>
+              <option value="99新">99新</option>
+              <option value="9成新">9成新</option>
+              <option value="8成新以上">8成新以上</option>
+              <option value="能用就行">能用就行</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>补充说明</label>
+            <textarea id="want-note" placeholder="描述一下具体需求、联系方式偏好等"></textarea>
+          </div>
+          <button class="btn-primary" onclick="publishWant()">发布求购</button>
         </div>
-        <div class="form-group">
-          <label>分类</label>
-          <select id="pub-category"></select>
-        </div>
-        <div class="form-group">
-          <label>价格（元）</label>
-          <input type="number" id="pub-price" placeholder="0 表示免费送">
-        </div>
-        <div class="form-group">
-          <label>交易方式</label>
-          <div class="trade-options" id="pub-trade"></div>
-        </div>
-        <div class="form-group">
-          <label>交易地点</label>
-          <input type="text" id="pub-location" placeholder="例：8号楼楼下 / 图书馆">
-        </div>
-        <div class="form-group">
-          <label>物品描述</label>
-          <textarea id="pub-desc" placeholder="描述一下物品成色、购买渠道、使用情况等"></textarea>
-        </div>
-        <button class="btn-primary" onclick="publishItem()">立即发布</button>
       </div>
     </div>
 
@@ -862,7 +901,8 @@
       currentItem: null,
       currentChat: null,
       listType: 'my-items',
-      listTab: '全部'
+      listTab: '全部',
+      publishMode: 'item'
     };
 
     function init() {
@@ -930,6 +970,7 @@
       if (tab === 'profile') updateProfileStats();
       if (tab === 'home') renderHome();
       if (tab === 'wanted') renderWanted();
+      if (tab === 'publish') setPublishMode('item');
     }
 
     function renderHomeTags() {
@@ -955,8 +996,9 @@
     }
 
     function renderCategories() {
-      const select = document.getElementById('pub-category');
-      select.innerHTML = categories.slice(1).map(c => `<option value="${c}">${c}</option>`).join('');
+      const html = categories.slice(1).map(c => `<option value="${c}">${c}</option>`).join('');
+      document.getElementById('pub-category').innerHTML = html;
+      document.getElementById('want-category').innerHTML = html;
     }
 
     function renderTradeOptions() {
@@ -967,6 +1009,14 @@
     function toggleTrade(el) {
       el.classList.toggle('active');
       if (document.querySelectorAll('#pub-trade .active').length === 0) el.classList.add('active');
+    }
+
+    function setPublishMode(mode) {
+      state.publishMode = mode;
+      document.getElementById('tab-item').classList.toggle('active', mode === 'item');
+      document.getElementById('tab-want').classList.toggle('active', mode === 'want');
+      document.getElementById('form-item').style.display = mode === 'item' ? 'block' : 'none';
+      document.getElementById('form-want').style.display = mode === 'want' ? 'block' : 'none';
     }
 
     function filterItems() {
@@ -1013,7 +1063,7 @@
       container.innerHTML = filtered.map(w => `
         <div class="wanted-card">
           <div class="title">求购：${w.title}</div>
-          <div class="info">预算：≤ ¥${w.budget} · 期望：${w.condition}</div>
+          <div class="info">${w.budget ? '预算：≤ ¥' + w.budget : '预算面议'} · 期望：${w.condition}${w.note ? ' · ' + w.note : ''}</div>
           <div class="footer">
             <span class="user">${w.user} · ${w.college} · ${formatTime(w.time)}</span>
             <button class="btn-have" onclick="contactWant(${w.id}, this)">我有</button>
@@ -1093,6 +1143,33 @@
       switchTab('home');
     }
 
+    function publishWant() {
+      const title = document.getElementById('want-title').value.trim();
+      const budget = parseFloat(document.getElementById('want-budget').value);
+      const category = document.getElementById('want-category').value;
+      const condition = document.getElementById('want-condition').value;
+      const note = document.getElementById('want-note').value.trim();
+
+      if (!title) return showToast('请填写想要求购的物品');
+
+      const want = {
+        id: Date.now(),
+        title,
+        budget: isNaN(budget) ? '' : budget,
+        condition,
+        category,
+        note,
+        user: currentUser.name,
+        college: currentUser.college,
+        time: Date.now()
+      };
+      state.wanted.unshift(want);
+      saveData();
+      resetWantForm();
+      showToast('求购发布成功');
+      switchTab('wanted');
+    }
+
     function resetPublishForm() {
       document.getElementById('pub-title').value = '';
       document.getElementById('pub-price').value = '';
@@ -1100,6 +1177,14 @@
       document.getElementById('pub-desc').value = '';
       renderPhotos();
       renderTradeOptions();
+    }
+
+    function resetWantForm() {
+      document.getElementById('want-title').value = '';
+      document.getElementById('want-budget').value = '';
+      document.getElementById('want-note').value = '';
+      document.getElementById('want-condition').value = '不限制';
+      setPublishMode('item');
     }
 
     function openDetail(id) {
@@ -1208,22 +1293,46 @@
         return;
       }
 
-      container.innerHTML = data.map(item => `
-        <div class="list-card">
-          <div class="img">${item.images && item.images.length ? `<img src="${item.images[0]}" alt="">` : ''}</div>
-          <div class="info">
-            <div class="title">${item.title}</div>
-            <div class="price">${item.price === 0 ? '免费送' : '¥' + item.price}</div>
-            <div class="meta">${item.category} · ${item.location} · ${formatTime(item.time)}</div>
-            ${state.listType === 'my-items' ? `
-              <div class="actions">
-                <button onclick="toggleSold(${item.id})">${item.sold ? '标记在售' : '标记售出'}</button>
-                <button class="danger" onclick="deleteItem(${item.id})">删除</button>
+      container.innerHTML = data.map(item => {
+        if (state.listType === 'my-wants') {
+          return `
+            <div class="list-card">
+              <div class="info">
+                <div class="title">求购：${item.title}</div>
+                <div class="price">${item.budget ? '预算 ≤ ¥' + item.budget : '预算面议'} · ${item.condition}</div>
+                <div class="meta">${item.category} · ${formatTime(item.time)}</div>
+                <div class="actions">
+                  <button class="danger" onclick="deleteWant(${item.id})">删除</button>
+                </div>
               </div>
-            ` : ''}
+            </div>
+          `;
+        }
+        return `
+          <div class="list-card">
+            <div class="img">${item.images && item.images.length ? `<img src="${item.images[0]}" alt="">` : ''}</div>
+            <div class="info">
+              <div class="title">${item.title}</div>
+              <div class="price">${item.price === 0 ? '免费送' : '¥' + item.price}</div>
+              <div class="meta">${item.category} · ${item.location} · ${formatTime(item.time)}</div>
+              ${state.listType === 'my-items' ? `
+                <div class="actions">
+                  <button onclick="toggleSold(${item.id})">${item.sold ? '标记在售' : '标记售出'}</button>
+                  <button class="danger" onclick="deleteItem(${item.id})">删除</button>
+                </div>
+              ` : ''}
+            </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
+    }
+
+    function deleteWant(id) {
+      if (!confirm('确定删除这条求购吗？')) return;
+      state.wanted = state.wanted.filter(w => w.id !== id);
+      saveData();
+      renderList();
+      renderWanted();
     }
 
     function toggleSold(id) {
