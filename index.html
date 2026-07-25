@@ -450,7 +450,7 @@
       overflow: hidden;
     }
     .detail-gallery img { width: 100%; height: 100%; object-fit: cover; }
-    .detail-info { padding: 16px; }
+    .detail-info { padding: 16px; padding-bottom: 80px; }
     .detail-price { font-size: 28px; font-weight: 700; color: var(--accent); }
     .detail-title { font-size: 18px; font-weight: 700; margin: 8px 0; }
     .detail-tags {
@@ -725,6 +725,10 @@
             <input type="text" id="pub-location" placeholder="例：8号楼楼下 / 图书馆">
           </div>
           <div class="form-group">
+            <label>联系方式</label>
+            <input type="text" id="pub-contact" placeholder="微信 / 手机号，方便买家联系你">
+          </div>
+          <div class="form-group">
             <label>物品描述</label>
             <textarea id="pub-desc" placeholder="描述一下物品成色、购买渠道、使用情况等"></textarea>
           </div>
@@ -757,8 +761,12 @@
             </select>
           </div>
           <div class="form-group">
+            <label>联系方式</label>
+            <input type="text" id="want-contact" placeholder="微信 / 手机号，方便卖家联系你">
+          </div>
+          <div class="form-group">
             <label>补充说明</label>
-            <textarea id="want-note" placeholder="描述一下具体需求、联系方式偏好等"></textarea>
+            <textarea id="want-note" placeholder="描述一下具体需求、对物品的要求等"></textarea>
           </div>
           <button class="btn-primary" onclick="publishWant()">发布求购</button>
         </div>
@@ -842,16 +850,45 @@
             <div class="seller-avatar" id="seller-avatar">陈</div>
             <div class="seller-info">
               <div class="name" id="seller-name">陈同学</div>
-              <span class="badge">已认证 · 电子信息学院</span>
+              <span class="badge" id="seller-college">已认证 · 电子信息学院</span>
             </div>
           </div>
           <h3 style="font-size: 15px; margin-bottom: 8px;">物品描述</h3>
           <p class="detail-desc" id="detail-desc"></p>
+          <div class="contact-tip" id="detail-contact" style="margin-top: 16px; background: var(--accent-soft); color: var(--accent-dark); padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5;"></div>
         </div>
       </div>
       <div class="detail-action">
         <button class="btn-wish" id="detail-wish" onclick="toggleWish()">想要</button>
         <button class="btn-chat" onclick="openChat()">聊一聊</button>
+      </div>
+    </div>
+
+    <!-- 求购详情弹窗 -->
+    <div class="modal" id="want-detail-modal">
+      <div class="modal-header">
+        <span class="back" onclick="closeModal('want-detail-modal')">‹</span>
+        <h2>求购详情</h2>
+      </div>
+      <div class="modal-body">
+        <div class="detail-info" style="padding-top: 8px;">
+          <div class="detail-price" id="want-detail-budget"></div>
+          <div class="detail-title" id="want-detail-title"></div>
+          <div class="detail-tags" id="want-detail-tags"></div>
+          <div class="seller-card">
+            <div class="seller-avatar" id="want-detail-avatar">求</div>
+            <div class="seller-info">
+              <div class="name" id="want-detail-user">陈同学</div>
+              <span class="badge" id="want-detail-college">已认证</span>
+            </div>
+          </div>
+          <h3 style="font-size: 15px; margin-bottom: 8px;">需求说明</h3>
+          <p class="detail-desc" id="want-detail-note"></p>
+          <div class="contact-tip" id="want-detail-contact" style="margin-top: 16px; background: var(--accent-soft); color: var(--accent-dark); padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5;"></div>
+        </div>
+      </div>
+      <div class="detail-action">
+        <button class="btn-chat" onclick="contactFromDetail()">我有这个，联系 TA</button>
       </div>
     </div>
 
@@ -888,7 +925,7 @@
   <script>
     const categories = ['全部', '教材资料', '电子数码', '宿舍生活', '美妆护肤', '衣物鞋包', '运动户外', '其他'];
     const tradeOptions = ['自提', '送货上门', '当面交易'];
-    const currentUser = { name: '陈同学', school: '松江校区', college: '电子信息学院', avatar: '陈' };
+    const currentUser = { name: '陈同学', school: '松江校区', college: '电子信息学院', avatar: '陈', contact: '微信：chen_tongxue' };
 
     let state = {
       activeTab: 'home',
@@ -923,17 +960,17 @@
 
     function seedData() {
       state.items = [
-        { id: 1, title: '线性代数教材 99新', price: 12, category: '教材资料', location: '13号楼', trade: ['自提'], desc: '上学期买的，基本没翻过，成色很新。', images: [], seller: '张同学', college: '数学学院', time: Date.now() - 7200000, sold: false },
-        { id: 2, title: '小米台灯 毕业出', price: 35, category: '宿舍生活', location: '8号楼楼下', trade: ['自提', '当面交易'], desc: '去年双十一购入，三档亮度，功能完好。', images: [], seller: '陈同学', college: '电子信息学院', time: Date.now() - 18000000, sold: false },
-        { id: 3, title: '计算器 fx-991', price: 45, category: '电子数码', location: '图书馆', trade: ['自提'], desc: '考试用了一学期，电池还有电。', images: [], seller: '李同学', college: '理学院', time: Date.now() - 86400000, sold: false },
-        { id: 4, title: '瑜伽垫 几乎全新', price: 18, category: '运动户外', location: '5号楼', trade: ['自提'], desc: '买回来用了两次就闲置了。', images: [], seller: '王同学', college: '管理学院', time: Date.now() - 86400000, sold: false },
-        { id: 5, title: 'AirPods 2 右耳', price: 150, category: '电子数码', location: '21号楼', trade: ['当面交易'], desc: '左耳丢了，出右耳和充电仓。', images: [], seller: '赵同学', college: '外语学院', time: Date.now() - 172800000, sold: false },
-        { id: 6, title: '考研英语词汇书', price: 8, category: '教材资料', location: '3号楼', trade: ['自提'], desc: '划了一些重点，不影响使用。', images: [], seller: '刘同学', college: '文学院', time: Date.now() - 172800000, sold: false }
+        { id: 1, title: '线性代数教材 99新', price: 12, category: '教材资料', location: '13号楼', trade: ['自提'], desc: '上学期买的，基本没翻过，成色很新。', images: [], seller: '张同学', college: '数学学院', time: Date.now() - 7200000, sold: false, contact: '微信：zhang_math' },
+        { id: 2, title: '小米台灯 毕业出', price: 35, category: '宿舍生活', location: '8号楼楼下', trade: ['自提', '当面交易'], desc: '去年双十一购入，三档亮度，功能完好。', images: [], seller: '陈同学', college: '电子信息学院', time: Date.now() - 18000000, sold: false, contact: '微信：chen_tongxue' },
+        { id: 3, title: '计算器 fx-991', price: 45, category: '电子数码', location: '图书馆', trade: ['自提'], desc: '考试用了一学期，电池还有电。', images: [], seller: '李同学', college: '理学院', time: Date.now() - 86400000, sold: false, contact: '微信：li_sci' },
+        { id: 4, title: '瑜伽垫 几乎全新', price: 18, category: '运动户外', location: '5号楼', trade: ['自提'], desc: '买回来用了两次就闲置了。', images: [], seller: '王同学', college: '管理学院', time: Date.now() - 86400000, sold: false, contact: '微信：wang_gl' },
+        { id: 5, title: 'AirPods 2 右耳', price: 150, category: '电子数码', location: '21号楼', trade: ['当面交易'], desc: '左耳丢了，出右耳和充电仓。', images: [], seller: '赵同学', college: '外语学院', time: Date.now() - 172800000, sold: false, contact: '微信：zhao_fl' },
+        { id: 6, title: '考研英语词汇书', price: 8, category: '教材资料', location: '3号楼', trade: ['自提'], desc: '划了一些重点，不影响使用。', images: [], seller: '刘同学', college: '文学院', time: Date.now() - 172800000, sold: false, contact: '微信：liu_lit' }
       ];
       state.wanted = [
-        { id: 1, title: '高等数学（同济第七版）上下册', budget: 20, condition: '8成新以上', category: '教材资料', user: '张同学', college: '计算机学院', time: Date.now() - 10800000 },
-        { id: 2, title: '床上桌，带抽屉款', budget: 50, condition: '无明显损坏', category: '宿舍生活', user: '李同学', college: '管理学院', time: Date.now() - 18000000 },
-        { id: 3, title: '四级真题卷（近5年）', budget: 10, condition: '有答案解析', category: '教材资料', user: '王同学', college: '外语学院', time: Date.now() - 86400000 }
+        { id: 1, title: '高等数学（同济第七版）上下册', budget: 20, condition: '8成新以上', category: '教材资料', user: '张同学', college: '计算机学院', time: Date.now() - 10800000, contact: '微信：zhang_cs' },
+        { id: 2, title: '床上桌，带抽屉款', budget: 50, condition: '无明显损坏', category: '宿舍生活', user: '李同学', college: '管理学院', time: Date.now() - 18000000, contact: '微信：li_gl' },
+        { id: 3, title: '四级真题卷（近5年）', budget: 10, condition: '有答案解析', category: '教材资料', user: '王同学', college: '外语学院', time: Date.now() - 86400000, contact: '微信：wang_fl' }
       ];
     }
 
@@ -1061,12 +1098,12 @@
       }
       empty.style.display = 'none';
       container.innerHTML = filtered.map(w => `
-        <div class="wanted-card">
+        <div class="wanted-card" onclick="openWantDetail(${w.id})">
           <div class="title">求购：${w.title}</div>
           <div class="info">${w.budget ? '预算：≤ ¥' + w.budget : '预算面议'} · 期望：${w.condition}${w.note ? ' · ' + w.note : ''}</div>
           <div class="footer">
             <span class="user">${w.user} · ${w.college} · ${formatTime(w.time)}</span>
-            <button class="btn-have" onclick="contactWant(${w.id}, this)">我有</button>
+            <button class="btn-have" onclick="event.stopPropagation(); contactWant(${w.id}, this)">我有</button>
           </div>
         </div>
       `).join('');
@@ -1113,6 +1150,7 @@
       const price = parseFloat(document.getElementById('pub-price').value);
       const location = document.getElementById('pub-location').value.trim();
       const desc = document.getElementById('pub-desc').value.trim();
+      const contact = document.getElementById('pub-contact').value.trim();
       const category = document.getElementById('pub-category').value;
       const trade = Array.from(document.querySelectorAll('#pub-trade .active')).map(el => el.dataset.value);
 
@@ -1129,6 +1167,7 @@
         location,
         trade,
         desc,
+        contact: contact || currentUser.contact,
         images: [...state.photos],
         seller: currentUser.name,
         college: currentUser.college,
@@ -1149,6 +1188,7 @@
       const category = document.getElementById('want-category').value;
       const condition = document.getElementById('want-condition').value;
       const note = document.getElementById('want-note').value.trim();
+      const contact = document.getElementById('want-contact').value.trim();
 
       if (!title) return showToast('请填写想要求购的物品');
 
@@ -1159,6 +1199,7 @@
         condition,
         category,
         note,
+        contact: contact || currentUser.contact,
         user: currentUser.name,
         college: currentUser.college,
         time: Date.now()
@@ -1174,6 +1215,7 @@
       document.getElementById('pub-title').value = '';
       document.getElementById('pub-price').value = '';
       document.getElementById('pub-location').value = '';
+      document.getElementById('pub-contact').value = '';
       document.getElementById('pub-desc').value = '';
       renderPhotos();
       renderTradeOptions();
@@ -1182,6 +1224,7 @@
     function resetWantForm() {
       document.getElementById('want-title').value = '';
       document.getElementById('want-budget').value = '';
+      document.getElementById('want-contact').value = '';
       document.getElementById('want-note').value = '';
       document.getElementById('want-condition').value = '不限制';
       setPublishMode('item');
@@ -1202,7 +1245,9 @@
       `;
       document.getElementById('seller-name').textContent = item.seller;
       document.getElementById('seller-avatar').textContent = item.seller[0];
+      document.getElementById('seller-college').textContent = '已认证 · ' + item.college;
       document.getElementById('detail-desc').textContent = item.desc || '暂无描述';
+      document.getElementById('detail-contact').innerHTML = `<strong>联系方式：</strong>${item.contact || currentUser.contact}`;
       const wishBtn = document.getElementById('detail-wish');
       const isLiked = state.likes.includes(id);
       wishBtn.textContent = isLiked ? '已想要' : '想要';
@@ -1233,6 +1278,16 @@
       document.getElementById('chat-modal').classList.add('active');
     }
 
+    function openChatWithWant(want) {
+      state.currentChat = want;
+      document.getElementById('chat-title').textContent = want.user;
+      const box = document.getElementById('chat-box');
+      box.innerHTML = `
+        <div class="chat-bubble other">你好，我看到你的求购「${want.title}」，我有这个物品，可以聊聊。</div>
+      `;
+      document.getElementById('chat-modal').classList.add('active');
+    }
+
     function sendChat() {
       const input = document.getElementById('chat-msg');
       const text = input.value.trim();
@@ -1247,14 +1302,34 @@
       }, 800);
     }
 
+    let currentWant = null;
+
+    function openWantDetail(id) {
+      const want = state.wanted.find(w => w.id === id);
+      if (!want) return;
+      currentWant = want;
+      document.getElementById('want-detail-budget').textContent = want.budget ? `预算 ≤ ¥${want.budget}` : '预算面议';
+      document.getElementById('want-detail-title').textContent = `求购：${want.title}`;
+      document.getElementById('want-detail-tags').innerHTML = `
+        <span>${want.category}</span>
+        <span>期望：${want.condition}</span>
+        <span>${formatTime(want.time)}</span>
+      `;
+      document.getElementById('want-detail-user').textContent = want.user;
+      document.getElementById('want-detail-avatar').textContent = want.user[0];
+      document.getElementById('want-detail-college').textContent = want.college;
+      document.getElementById('want-detail-note').textContent = want.note || '暂无补充说明';
+      document.getElementById('want-detail-contact').innerHTML = `<strong>联系方式：</strong>${want.contact || currentUser.contact}`;
+      document.getElementById('want-detail-modal').classList.add('active');
+    }
+
     function contactWant(id, btn) {
-      btn.textContent = '已通知';
-      btn.style.background = 'var(--muted)';
-      setTimeout(() => {
-        btn.textContent = '我有';
-        btn.style.background = '';
-      }, 1500);
-      showToast('已向对方发送意向');
+      openWantDetail(id);
+    }
+
+    function contactFromDetail() {
+      if (!currentWant) return;
+      openChatWithWant(currentWant);
     }
 
     function showListPage(type) {
@@ -1296,13 +1371,13 @@
       container.innerHTML = data.map(item => {
         if (state.listType === 'my-wants') {
           return `
-            <div class="list-card">
+            <div class="list-card" onclick="openWantDetail(${item.id})">
               <div class="info">
                 <div class="title">求购：${item.title}</div>
                 <div class="price">${item.budget ? '预算 ≤ ¥' + item.budget : '预算面议'} · ${item.condition}</div>
                 <div class="meta">${item.category} · ${formatTime(item.time)}</div>
                 <div class="actions">
-                  <button class="danger" onclick="deleteWant(${item.id})">删除</button>
+                  <button class="danger" onclick="event.stopPropagation(); deleteWant(${item.id})">删除</button>
                 </div>
               </div>
             </div>
