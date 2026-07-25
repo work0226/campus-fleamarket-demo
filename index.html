@@ -870,6 +870,7 @@
       </div>
       <div class="tags" id="home-tags"></div>
       <div class="filter-bar" id="home-price-filter"></div>
+      <div class="filter-bar" id="home-sort-filter"></div>
       <div class="items-grid" id="home-items"></div>
       <div class="empty-state" id="home-empty" style="display:none;">
         <div class="icon">📦</div>
@@ -886,6 +887,7 @@
       </div>
       <div class="tags" id="wanted-tags"></div>
       <div class="filter-bar" id="wanted-price-filter"></div>
+      <div class="filter-bar" id="wanted-sort-filter"></div>
       <div id="wanted-list"></div>
       <div class="empty-state" id="wanted-empty" style="display:none;">
         <div class="icon">📝</div>
@@ -1206,6 +1208,7 @@
 
   <script>
     const categories = ['全部', '教材资料', '电子数码', '宿舍生活', '美妆护肤', '衣物鞋包', '运动户外', '其他'];
+    const sortOptions = ['最新发布', '价格从低到高', '价格从高到低'];
     const priceRanges = [
       { label: '全部', min: 0, max: Infinity },
       { label: '20元以下', min: 0, max: 20 },
@@ -1222,6 +1225,8 @@
       wantedTag: '全部',
       homePriceIdx: 0,
       wantedPriceIdx: 0,
+      homeSort: 0,
+      wantedSort: 0,
       items: [],
       wanted: [],
       likes: [],
@@ -1246,6 +1251,7 @@
       renderHomeTags();
       renderWantedTags();
       renderPriceFilters();
+      renderSortFilters();
       renderCategories();
       renderTradeOptions();
       renderHome();
@@ -1376,6 +1382,33 @@
       renderWanted();
     }
 
+    function renderSortFilters() {
+      const homeContainer = document.getElementById('home-sort-filter');
+      const wantedContainer = document.getElementById('wanted-sort-filter');
+      if (homeContainer) {
+        homeContainer.innerHTML = '<span class="filter-label">排序：</span>' + sortOptions.map((s, i) => `
+          <span class="tag ${i === state.homeSort ? 'active' : ''}" onclick="setHomeSort(${i})">${s}</span>
+        `).join('');
+      }
+      if (wantedContainer) {
+        wantedContainer.innerHTML = '<span class="filter-label">排序：</span>' + sortOptions.map((s, i) => `
+          <span class="tag ${i === state.wantedSort ? 'active' : ''}" onclick="setWantedSort(${i})">${s}</span>
+        `).join('');
+      }
+    }
+
+    function setHomeSort(idx) {
+      state.homeSort = idx;
+      renderSortFilters();
+      renderHome();
+    }
+
+    function setWantedSort(idx) {
+      state.wantedSort = idx;
+      renderSortFilters();
+      renderWanted();
+    }
+
     function filterWanted() {
       renderWanted();
     }
@@ -1423,7 +1456,7 @@
         const matchKw = item.title.toLowerCase().includes(keyword) || item.desc.toLowerCase().includes(keyword);
         const matchPrice = state.homePriceIdx === 0 || (item.price >= priceRange.min && item.price < priceRange.max);
         return matchTag && matchKw && matchPrice && !item.sold;
-      });
+      }).sort(sortItems);
       const container = document.getElementById('home-items');
       const empty = document.getElementById('home-empty');
       if (filtered.length === 0) {
@@ -1692,21 +1725,16 @@
 
     function openChatWithWant(want) {
       state.currentChat = want;
-      const initialMsg = { from: 'other', text: `你好，我看到你的求购「${want.title}」，我有这个物品，可以聊聊。`, time: Date.now(), type: 'text' };
       const record = updateChatRecord({
         type: 'want',
         targetId: want.id,
         peerName: want.user,
         peerCollege: want.college,
         title: want.title,
-        lastMsg: initialMsg.text,
-        lastTime: initialMsg.time,
+        lastMsg: '开始聊天吧',
+        lastTime: Date.now(),
         unread: 0
       });
-      if (!record.messages || record.messages.length === 0) {
-        record.messages = [initialMsg];
-        saveData();
-      }
       document.getElementById('chat-title').textContent = want.user;
       renderChatMessages(record.messages);
       document.getElementById('chat-modal').classList.add('active');
@@ -1973,7 +2001,8 @@
     }
 
     function contactWant(id, btn) {
-      openWantDetail(id);
+      const want = state.wanted.find(w => w.id === id);
+      if (want) openChatWithWant(want);
     }
 
     function contactFromDetail() {
