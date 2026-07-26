@@ -184,19 +184,36 @@
 
     .empty-state {
       text-align: center;
-      padding: 60px 20px;
+      padding: 72px 24px;
       color: var(--muted);
     }
     .empty-state .icon {
-      width: 80px;
-      height: 80px;
+      width: 96px;
+      height: 96px;
       background: var(--accent-soft);
       border-radius: 50%;
-      margin: 0 auto 16px;
+      margin: 0 auto 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      font-size: 40px;
+    }
+    .empty-state .title { font-size: 16px; font-weight: 600; color: var(--ink); margin-bottom: 6px; }
+    .empty-state p { font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+    .empty-btn {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .empty-btn.secondary {
+      background: var(--bg2);
+      color: var(--accent);
+      border: 1px solid rgba(5,150,105,0.2);
     }
 
     .bottom-nav {
@@ -723,6 +740,16 @@
       text-align: center;
       font-size: 13px;
     }
+    .chat-context {
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin: 8px 16px 4px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .chat-context strong { color: var(--ink); font-weight: 600; }
     .chat-input {
       position: absolute;
       bottom: 0;
@@ -997,7 +1024,9 @@
       <div class="items-grid" id="home-items"></div>
       <div class="empty-state" id="home-empty" style="display:none;">
         <div class="icon">📦</div>
-        <p>该分类下暂无物品</p>
+        <div class="title">该分类下暂无物品</div>
+        <p>换个分类或价格区间试试，<br>也可以成为第一个发布的人</p>
+        <button class="empty-btn" onclick="switchTab('publish')">去发布</button>
       </div>
     </div>
 
@@ -1014,7 +1043,9 @@
       <div id="wanted-list"></div>
       <div class="empty-state" id="wanted-empty" style="display:none;">
         <div class="icon">📝</div>
-        <p>暂无求购信息</p>
+        <div class="title">暂无求购信息</div>
+        <p>还没有同学发布求购需求，<br>你可以先发一条</p>
+        <button class="empty-btn" onclick="switchTab('publish'); setPublishMode('want');">发布求购</button>
       </div>
     </div>
 
@@ -2012,7 +2043,7 @@
       const container = document.getElementById('message-list');
       if (!container) return;
       if (state.chats.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="icon">💬</div><p>暂无消息</p><p style="font-size:13px; margin-top:8px;">从商品或求购详情页发起沟通</p></div>';
+        container.innerHTML = '<div class="empty-state"><div class="icon">💬</div><div class="title">暂无消息</div><p>从商品或求购详情页发起沟通，<br>交易问题可以直接聊</p><button class="empty-btn secondary" onclick="closeModal(\'message-modal\'); switchTab(\'home\');">去逛逛</button></div>';
         return;
       }
       container.innerHTML = state.chats.map((c, i) => `
@@ -2056,14 +2087,16 @@
 
     function renderChatMessages(messages) {
       const box = document.getElementById('chat-box');
+      const contextHtml = (state.currentChat && !state.currentChat.seller && state.currentChat.user) ?
+        `<div class="chat-context">来自求购：<strong>${escapeHtml(state.currentChat.title)}</strong><br>预算 ${state.currentChat.budget ? '≤ ¥' + state.currentChat.budget : '面议'} · ${escapeHtml(state.currentChat.condition)}</div>` : '';
       if (!messages || messages.length === 0) {
-        box.innerHTML = '<div class="chat-time">开始聊天吧</div>';
+        box.innerHTML = contextHtml + '<div class="chat-time">开始聊天吧</div>';
         return;
       }
       let lastTime = 0;
       const timeGap = 3 * 60 * 1000;
       const lastMeIdx = messages.map((m, i) => m.from === 'me' ? i : -1).filter(i => i !== -1).pop();
-      box.innerHTML = messages.map((m, idx) => {
+      box.innerHTML = contextHtml + messages.map((m, idx) => {
         let timeHtml = '';
         if (m.time - lastTime > timeGap) {
           timeHtml = `<div class="chat-time">${formatChatTime(m.time)}</div>`;
@@ -2385,7 +2418,13 @@
       }
 
       if (data.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><p>暂无数据</p></div>';
+        const emptyMap = {
+          'my-items': { icon: '📭', title: '还没有发布闲置', desc: '把不再用的教材、电器等发布出来，<br>同校同学可以看到', btn: '去发布', action: "closeModal('list-modal'); switchTab('publish');" },
+          'my-wants': { icon: '📝', title: '还没有发布求购', desc: '想买什么可以发出来，<br>有货的同学会联系你', btn: '发布求购', action: "closeModal('list-modal'); switchTab('publish'); setPublishMode('want');" },
+          'my-likes': { icon: '❤️', title: '还没有收藏任何物品', desc: '看到感兴趣的闲置可以点击“想要”<br>在这里统一管理', btn: '去逛逛', action: "closeModal('list-modal'); switchTab('home');" }
+        };
+        const e = emptyMap[state.listType];
+        container.innerHTML = `<div class="empty-state"><div class="icon">${e.icon}</div><div class="title">${e.title}</div><p>${e.desc}</p><button class="empty-btn" onclick="${e.action}">${e.btn}</button></div>`;
         return;
       }
 
@@ -2422,10 +2461,33 @@
                   <button class="danger" onclick="event.stopPropagation(); deleteItem(${item.id})">删除</button>
                 </div>
               ` : ''}
+              ${state.listType === 'my-likes' ? `
+                <div class="actions">
+                  <button onclick="event.stopPropagation(); contactSellerFromLike(${item.id})">联系卖家</button>
+                  <button class="danger" onclick="event.stopPropagation(); unlikeItem(${item.id})">取消想要</button>
+                </div>
+              ` : ''}
             </div>
           </div>
         `;
       }).join('');
+    }
+
+    function contactSellerFromLike(id) {
+      const item = state.items.find(i => i.id === id);
+      if (!item) return;
+      state.currentItem = item;
+      closeModal('list-modal');
+      openChat();
+    }
+
+    function unlikeItem(id) {
+      const idx = state.likes.indexOf(id);
+      if (idx !== -1) state.likes.splice(idx, 1);
+      saveData();
+      renderHome();
+      renderList();
+      showToast('已取消收藏');
     }
 
     function deleteWant(id) {
