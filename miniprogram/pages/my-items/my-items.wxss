@@ -1,0 +1,106 @@
+.tabs {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  font-size: 30rpx;
+  color: var(--text-secondary);
+  background: #f9fafb;
+}
+
+.tab.active {
+  color: var(--primary);
+  background: #fff;
+  font-weight: 500;
+  border-bottom: 4rpx solid var(--primary);
+}
+
+.list-wrap {
+  height: calc(100vh - 200rpx);
+}
+
+.item-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.item-card .main {
+  display: flex;
+}
+
+.thumb {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 12rpx;
+  background: #f3f4f6;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 26rpx;
+}
+
+.info {
+  flex: 1;
+  margin-left: 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.info .title {
+  font-size: 30rpx;
+  font-weight: 500;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.info .price {
+  color: var(--danger);
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.info .sub {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+.info .sub .time {
+  margin-left: auto;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx solid var(--border);
+}
+
+.action {
+  margin-left: 24rpx;
+  color: var(--primary);
+  font-size: 26rpx;
+}
+
+.action.danger {
+  color: var(--danger);
+}

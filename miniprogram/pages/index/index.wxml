@@ -1,0 +1,50 @@
+<view class="container">
+  <view class="search-bar card">
+    <input class="search-input" placeholder="搜索宝贝标题或描述" value="{{keyword}}" bindinput="onKeywordInput" bindconfirm="onSearch" />
+    <text class="search-btn" bindtap="onSearch">搜索</text>
+  </view>
+
+  <view class="filter-bar card">
+    <picker range="{{categories}}" value="{{categoryIndex}}" bindchange="onCategoryChange">
+      <view class="picker">{{categories[categoryIndex]}}</view>
+    </picker>
+    <picker range="{{campuses}}" value="{{campusIndex}}" bindchange="onCampusChange">
+      <view class="picker">{{campuses[campusIndex]}}</view>
+    </picker>
+    <picker range="{{sortLabels}}" value="{{sortIndex}}" bindchange="onSortChange">
+      <view class="picker">{{sortLabels[sortIndex]}}</view>
+    </picker>
+  </view>
+
+  <view class="price-bar card">
+    <input type="digit" placeholder="最低价" value="{{minPrice}}" bindinput="onMinPriceInput" />
+    <text class="split">-</text>
+    <input type="digit" placeholder="最高价" value="{{maxPrice}}" bindinput="onMaxPriceInput" />
+    <text class="reset" bindtap="resetFilter">重置</text>
+  </view>
+
+  <scroll-view scroll-y class="list-wrap" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh">
+    <view wx:for="{{items}}" wx:key="_id" class="item-card" bindtap="goDetail" data-id="{{item._id}}">
+      <view class="img-wrap">
+        <image wx:if="{{item.images && item.images.length}}" src="{{item.images[0]}}" mode="aspectFill" />
+        <view wx:else class="img-placeholder">暂无图片</view>
+      </view>
+      <view class="item-info">
+        <view class="title">{{item.title}}</view>
+        <view class="price-row">
+          <text class="price">¥{{item.price}}</text>
+          <text class="status {{item.status}}">{{statusText[item.status]}}</text>
+        </view>
+        <view class="meta">
+          <text class="tag" wx:if="{{item.category}}">{{item.category}}</text>
+          <text>{{item.campus}}</text>
+          <text class="time">{{timeAgo(item.createTime)}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="page-loading">加载中...</view>
+    <view wx:if="{{!loading && !items.length && !error}}" class="empty">暂无闲置，去发布一个吧~</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+  </scroll-view>
+</view>

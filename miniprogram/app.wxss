@@ -1,0 +1,136 @@
+page {
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --danger: #ef4444;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+.container {
+  padding: 20rpx;
+  box-sizing: border-box;
+}
+
+.card {
+  background: var(--card);
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 40rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 30rpx;
+  text-align: center;
+  border: none;
+}
+
+.btn-primary::after {
+  border: none;
+}
+
+.btn-plain {
+  background: #fff;
+  color: var(--primary);
+  border: 2rpx solid var(--primary);
+  border-radius: 40rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 28rpx;
+  text-align: center;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-radius: 40rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 28rpx;
+  text-align: center;
+  border: none;
+}
+
+.btn-sm {
+  height: 56rpx;
+  line-height: 56rpx;
+  font-size: 24rpx;
+  padding: 0 24rpx;
+  display: inline-block;
+}
+
+.page-loading,
+.empty,
+.error {
+  text-align: center;
+  padding: 60rpx 0;
+  color: var(--text-secondary);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.tag {
+  display: inline-block;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  background: #eff6ff;
+  color: var(--primary);
+  margin-right: 10rpx;
+}
+
+.status {
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+.status.active {
+  background: #dcfce7;
+  color: var(--success);
+}
+
+.status.offline {
+  background: #f3f4f6;
+  color: var(--text-secondary);
+}
+
+.status.sold {
+  background: #fee2e2;
+  color: var(--danger);
+}
+
+.avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.line {
+  height: 2rpx;
+  background: var(--border);
+  margin: 20rpx 0;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  margin-bottom: 16rpx;
+}

@@ -1,0 +1,75 @@
+<view class="container">
+  <view class="type-tabs card">
+    <view class="tab {{type==='item'?'active':''}}" bindtap="switchType" data-type="item">发布闲置</view>
+    <view class="tab {{type==='want'?'active':''}}" bindtap="switchType" data-type="want">发布求购</view>
+  </view>
+
+  <view class="form card">
+    <view class="form-row">
+      <text class="label">标题 *</text>
+      <input placeholder="请输入标题" value="{{title}}" bindinput="onTitleInput" />
+    </view>
+
+    <view wx:if="{{type==='item'}}" class="form-row">
+      <text class="label">价格 *</text>
+      <input type="digit" placeholder="请输入价格" value="{{price}}" bindinput="onPriceInput" />
+    </view>
+
+    <view wx:if="{{type==='want'}}" class="form-row">
+      <text class="label">预算 *</text>
+      <input type="digit" placeholder="请输入预算" value="{{budget}}" bindinput="onBudgetInput" />
+    </view>
+
+    <view class="form-row">
+      <text class="label">分类 *</text>
+      <picker range="{{categories}}" value="{{categoryIndex}}" bindchange="onCategoryChange">
+        <view class="picker-value">{{categories[categoryIndex] || '请选择分类'}}</view>
+      </picker>
+    </view>
+
+    <view wx:if="{{type==='item'}}" class="form-row">
+      <text class="label">交易方式</text>
+      <view class="checkbox-group">
+        <view wx:for="{{tradeMethods}}" wx:key="*this" class="checkbox {{item.checked?'checked':''}}" bindtap="toggleTrade" data-index="{{index}}">{{item.name}}</view>
+      </view>
+    </view>
+
+    <view wx:if="{{type==='item'}}" class="form-row">
+      <text class="label">交易地点</text>
+      <input placeholder="可选，如图书馆/食堂" value="{{location}}" bindinput="onLocationInput" />
+    </view>
+
+    <view wx:if="{{type==='want'}}" class="form-row">
+      <text class="label">期望成色</text>
+      <picker range="{{conditions}}" value="{{conditionIndex}}" bindchange="onConditionChange">
+        <view class="picker-value">{{conditions[conditionIndex]}}</view>
+      </picker>
+    </view>
+
+    <view wx:if="{{type==='want'}}" class="form-row">
+      <text class="label">校区</text>
+      <picker range="{{campuses}}" value="{{campusIndex}}" bindchange="onCampusChange">
+        <view class="picker-value">{{campuses[campusIndex]}}</view>
+      </picker>
+    </view>
+
+    <view class="form-row block">
+      <text class="label">{{type==='item'?'描述':'补充说明'}}</text>
+      <textarea placeholder="{{type==='item'?'描述一下物品成色、购买渠道等':'描述具体需求'}}" value="{{desc}}" bindinput="onDescInput" maxlength="500" />
+      <text class="counter">{{desc.length}}/500</text>
+    </view>
+
+    <view wx:if="{{type==='item'}}" class="form-row block">
+      <text class="label">图片（最多9张）</text>
+      <view class="image-list">
+        <view wx:for="{{images}}" wx:key="*this" class="img-box">
+          <image src="{{item}}" mode="aspectFill" />
+          <text class="del" bindtap="deleteImage" data-index="{{index}}">×</text>
+        </view>
+        <view wx:if="{{images.length<9}}" class="add-img" bindtap="chooseImage">+</view>
+      </view>
+    </view>
+  </view>
+
+  <button class="btn-primary submit-btn" loading="{{submitting}}" bindtap="submit">立即发布</button>
+</view>

@@ -1,0 +1,10 @@
+<view class="container">
+  <view class="card">
+    <view class="section-title">为交易「{{title}}」评分</view>
+    <view class="stars">
+      <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this" class="star {{score>=item?'active':''}}" bindtap="setScore" data-score="{{item}}">★</text>
+    </view>
+    <view class="score-text">{{score}} 星</view>
+    <button class="btn-primary submit-btn" loading="{{submitting}}" bindtap="submit">提交评价</button>
+  </view>
+</view>

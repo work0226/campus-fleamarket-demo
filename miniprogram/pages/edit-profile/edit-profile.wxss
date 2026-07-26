@@ -1,0 +1,28 @@
+.form-row {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 0;
+  border-bottom: 2rpx solid var(--border);
+}
+
+.form-row .label {
+  width: 200rpx;
+  flex-shrink: 0;
+  font-size: 28rpx;
+}
+
+.form-row input,
+.form-row .picker-value {
+  flex: 1;
+  font-size: 28rpx;
+}
+
+.tip {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+  padding: 12rpx 0 0 200rpx;
+}
+
+button {
+  margin-top: 40rpx;
+}

@@ -1,0 +1,34 @@
+<view class="container">
+  <view class="tabs card">
+    <view class="tab {{type==='item'?'active':''}}" bindtap="switchType" data-type="item">我的闲置</view>
+    <view class="tab {{type==='want'?'active':''}}" bindtap="switchType" data-type="want">我的求购</view>
+  </view>
+
+  <scroll-view scroll-y class="list-wrap" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="load">
+    <view wx:for="{{list}}" wx:key="_id" class="item-card">
+      <view class="main" bindtap="goDetail" data-id="{{item._id}}">
+        <image wx:if="{{type==='item' && item.images && item.images.length}}" class="thumb" src="{{item.images[0]}}" mode="aspectFill" />
+        <view wx:else class="thumb thumb-empty">{{type==='item'?'无图':'求购'}}</view>
+        <view class="info">
+          <view class="title">{{item.title}}</view>
+          <view class="price" wx:if="{{type==='item'}}">¥{{item.price}}</view>
+          <view class="price" wx:else>预算 ¥{{item.budget}}</view>
+          <view class="sub">
+            <text class="status {{item.status || 'active'}}">{{statusText[item.status || 'active']}}</text>
+            <text class="time">{{timeAgo(item.createTime)}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="actions">
+        <text wx:if="{{type==='item'}}" class="action" bindtap="toggleStatus" data-item="{{item}}">{{item.status==='active'?'下架':'上架'}}</text>
+        <text wx:if="{{type==='item' && item.status==='active'}}" class="action" bindtap="markSold" data-item="{{item}}">标记已售</text>
+        <text class="action" bindtap="editItem" data-item="{{item}}">编辑</text>
+        <text class="action danger" bindtap="deleteItem" data-item="{{item}}">删除</text>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="page-loading">加载中...</view>
+    <view wx:if="{{!loading && !list.length && !error}}" class="empty">还没有发布内容</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+  </scroll-view>
+</view>

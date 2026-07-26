@@ -1,0 +1,144 @@
+.banner {
+  width: 100%;
+  height: 500rpx;
+  background: #f3f4f6;
+}
+
+.banner image {
+  width: 100%;
+  height: 100%;
+}
+
+.empty-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.info-card .price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.info-card .price {
+  color: var(--danger);
+  font-size: 48rpx;
+  font-weight: 700;
+}
+
+.info-card .title {
+  font-size: 34rpx;
+  font-weight: 500;
+  margin-top: 16rpx;
+}
+
+.info-card .meta {
+  display: flex;
+  align-items: center;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+.info-card .meta .time {
+  margin-left: auto;
+}
+
+.seller-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.seller-left {
+  display: flex;
+  align-items: center;
+}
+
+.seller-info {
+  margin-left: 16rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.seller-info .nickname {
+  font-size: 30rpx;
+}
+
+.seller-info .credit {
+  font-size: 24rpx;
+  color: var(--warning);
+  margin-top: 4rpx;
+}
+
+.manage .link {
+  margin-left: 20rpx;
+  color: var(--primary);
+  font-size: 26rpx;
+}
+
+.manage .danger {
+  color: var(--danger);
+}
+
+.detail-card .desc {
+  font-size: 28rpx;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 16rpx;
+}
+
+.detail-card .trade {
+  margin-bottom: 12rpx;
+}
+
+.detail-card .location {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+
+.action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 2rpx solid var(--border);
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-left {
+  display: flex;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 32rpx;
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+.action-item .icon {
+  font-size: 34rpx;
+  color: var(--text-secondary);
+}
+
+.action-item .icon.active {
+  color: var(--warning);
+}
+
+.contact-btn {
+  width: 400rpx;
+  margin: 0;
+}
+
+.contact-btn.disabled {
+  opacity: 0.5;
+}

@@ -1,0 +1,66 @@
+<view class="container" wx:if="{{item}}">
+  <swiper class="banner" indicator-dots autoplay circular wx:if="{{item.images && item.images.length}}">
+    <swiper-item wx:for="{{item.images}}" wx:key="*this">
+      <image src="{{item}}" mode="aspectFill" />
+    </swiper-item>
+  </swiper>
+  <view wx:else class="banner empty-banner">暂无图片</view>
+
+  <view class="info-card card">
+    <view class="price-row">
+      <text class="price">¥{{item.price}}</text>
+      <text class="status {{item.status}}">{{statusText[item.status]}}</text>
+    </view>
+    <view class="title">{{item.title}}</view>
+    <view class="meta">
+      <text class="tag">{{item.category}}</text>
+      <text>{{item.campus}}</text>
+      <text class="time">{{timeAgo(item.createTime)}}</text>
+    </view>
+  </view>
+
+  <view class="seller-card card">
+    <view class="seller-left">
+      <image wx:if="{{item.sellerAvatar}}" class="avatar" src="{{item.sellerAvatar}}" />
+      <view wx:else class="avatar avatar-empty"></view>
+      <view class="seller-info">
+        <text class="nickname">{{item.sellerNickName || '校园用户'}}</text>
+        <text class="credit" wx:if="{{credit.count}}">信用 {{credit.average}} 分（{{credit.count}}条）</text>
+        <text class="credit" wx:else>暂无信用评分</text>
+      </view>
+    </view>
+    <view wx:if="{{isSeller}}" class="manage">
+      <text class="link" bindtap="editItem">编辑</text>
+      <text class="link" bindtap="toggleStatus">{{item.status==='active'?'下架':'重新上架'}}</text>
+      <text class="link danger" bindtap="deleteItem">删除</text>
+    </view>
+  </view>
+
+  <view class="detail-card card">
+    <view class="section-title">商品描述</view>
+    <view class="desc">{{item.desc || '卖家未填写描述'}}</view>
+    <view wx:if="{{item.trade && item.trade.length}}" class="trade">
+      <text class="tag" wx:for="{{item.trade}}" wx:key="*this">{{item}}</text>
+    </view>
+    <view wx:if="{{item.location}}" class="location">交易地点：{{item.location}}</view>
+  </view>
+
+  <view class="action-bar">
+    <view class="action-left">
+      <view class="action-item" bindtap="toggleFavorite">
+        <text class="icon {{isFavorite?'active':''}}">★</text>
+        <text>{{isFavorite?'已收藏':'收藏'}}</text>
+      </view>
+      <view wx:if="{{canRate}}" class="action-item" bindtap="goRating">
+        <text class="icon">☆</text>
+        <text>评分</text>
+      </view>
+    </view>
+    <button class="btn-primary contact-btn {{item.status!=='active'?'disabled':''}}" disabled="{{item.status!=='active'}}" bindtap="contactSeller">
+      {{item.status==='active'?'我想要':'不可联系'}}
+    </button>
+  </view>
+</view>
+
+<view wx:if="{{loading}}" class="page-loading">加载中...</view>
+<view wx:if="{{error}}" class="error">{{error}}</view>

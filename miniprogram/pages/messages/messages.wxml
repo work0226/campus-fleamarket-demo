@@ -1,0 +1,29 @@
+<view class="container">
+  <view class="tabs card">
+    <view class="tab {{filter==='all'?'active':''}}" bindtap="switchFilter" data-type="all">全部</view>
+    <view class="tab {{filter==='item'?'active':''}}" bindtap="switchFilter" data-type="item">闲置</view>
+    <view class="tab {{filter==='want'?'active':''}}" bindtap="switchFilter" data-type="want">求购</view>
+  </view>
+
+  <scroll-view scroll-y class="list-wrap" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="loadChats">
+    <view wx:for="{{chats}}" wx:key="_id" class="chat-card {{item.unreadCount[openid]>0?'new':''}}" bindtap="goChat" data-item="{{item}}">
+      <image wx:if="{{item.peerAvatar}}" class="avatar" src="{{item.peerAvatar}}" />
+      <view wx:else class="avatar avatar-empty"></view>
+      <view class="chat-info">
+        <view class="chat-top">
+          <text class="peer-name">{{item.peerName || '校园用户'}}</text>
+          <text class="time">{{timeAgo(item.lastTime)}}</text>
+        </view>
+        <view class="chat-bottom">
+          <text class="last-msg">{{item.lastMsg || '暂无消息'}}</text>
+          <view wx:if="{{item.unreadCount[openid]>0}}" class="badge">{{item.unreadCount[openid]}}</view>
+        </view>
+        <view class="type-tag">{{item.type==='item'?'闲置':'求购'}} · {{item.title}}</view>
+      </view>
+    </view>
+
+    <view wx:if="{{loading}}" class="page-loading">加载中...</view>
+    <view wx:if="{{!loading && !chats.length && !error}}" class="empty">暂无消息</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+  </scroll-view>
+</view>

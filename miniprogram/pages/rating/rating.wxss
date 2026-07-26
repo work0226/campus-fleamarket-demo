@@ -1,0 +1,26 @@
+.stars {
+  display: flex;
+  justify-content: center;
+  margin: 40rpx 0;
+}
+
+.star {
+  font-size: 80rpx;
+  color: #e5e7eb;
+  margin: 0 12rpx;
+}
+
+.star.active {
+  color: var(--warning);
+}
+
+.score-text {
+  text-align: center;
+  font-size: 32rpx;
+  color: var(--text);
+  margin-bottom: 40rpx;
+}
+
+.submit-btn {
+  margin-top: 20rpx;
+}

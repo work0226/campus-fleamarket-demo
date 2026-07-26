@@ -1,0 +1,42 @@
+<view class="container">
+  <view class="filter-bar card">
+    <picker range="{{categories}}" value="{{categoryIndex}}" bindchange="onCategoryChange">
+      <view class="picker">{{categories[categoryIndex]}}</view>
+    </picker>
+    <picker range="{{campuses}}" value="{{campusIndex}}" bindchange="onCampusChange">
+      <view class="picker">{{campuses[campusIndex]}}</view>
+    </picker>
+  </view>
+
+  <view class="price-bar card">
+    <input type="digit" placeholder="最低预算" value="{{minBudget}}" bindinput="onMinBudgetInput" />
+    <text class="split">-</text>
+    <input type="digit" placeholder="最高预算" value="{{maxBudget}}" bindinput="onMaxBudgetInput" />
+    <text class="reset" bindtap="resetFilter">重置</text>
+  </view>
+
+  <scroll-view scroll-y class="list-wrap" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh">
+    <view wx:for="{{wants}}" wx:key="_id" class="want-card" bindtap="goDetail" data-id="{{item._id}}">
+      <view class="want-header">
+        <image wx:if="{{item.userAvatar}}" class="avatar" src="{{item.userAvatar}}" />
+        <view wx:else class="avatar avatar-empty"></view>
+        <view class="user-info">
+          <text class="nickname">{{item.userNickName || '校园用户'}}</text>
+          <text class="campus">{{item.campus}}</text>
+        </view>
+        <text class="time">{{timeAgo(item.createTime)}}</text>
+      </view>
+      <view class="want-title">{{item.title}}</view>
+      <view class="want-meta">
+        <text class="budget">预算 ¥{{item.budget}}</text>
+        <text class="tag" wx:if="{{item.condition}}">{{item.condition}}</text>
+        <text class="tag" wx:if="{{item.category}}">{{item.category}}</text>
+      </view>
+      <view wx:if="{{item.note}}" class="want-note">{{item.note}}</view>
+    </view>
+
+    <view wx:if="{{loading}}" class="page-loading">加载中...</view>
+    <view wx:if="{{!loading && !wants.length && !error}}" class="empty">暂无求购信息</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+  </scroll-view>
+</view>

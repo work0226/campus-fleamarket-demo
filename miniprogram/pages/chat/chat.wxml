@@ -1,0 +1,31 @@
+<view class="chat-page">
+  <view class="target-bar" bindtap="goTargetDetail">
+    <text class="target-text">{{title || '聊天'}}</text>
+    <text class="arrow">></text>
+  </view>
+
+  <scroll-view scroll-y scroll-into-view="{{scrollTo}}" class="message-list" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="loadMessages">
+    <view wx:if="{{loading}}" class="page-loading">加载中...</view>
+    <view wx:for="{{messages}}" wx:key="_id" id="msg-{{index}}" class="message {{item.senderOpenid===openid?'self':'other'}}">
+      <image wx:if="{{item.senderOpenid!==openid && peerAvatar}}" class="msg-avatar" src="{{peerAvatar}}" />
+      <image wx:if="{{item.senderOpenid===openid && myAvatar}}" class="msg-avatar" src="{{myAvatar}}" />
+      <view class="bubble">
+        <text>{{item.text}}</text>
+      </view>
+      <view wx:if="{{item.senderOpenid===openid}}" class="read-status">{{item.read?'已读':'未读'}}</view>
+    </view>
+    <view wx:if="{{!loading && !messages.length}}" class="empty">暂无消息，打个招呼吧</view>
+  </scroll-view>
+
+  <view wx:if="{{contactVisible}}" class="contact-toast">
+    <text>对方联系方式：{{contactText}}</text>
+  </view>
+
+  <view class="input-bar">
+    <input class="msg-input" placeholder="输入消息..." value="{{inputText}}" bindinput="onInput" confirm-type="send" bindconfirm="sendText" />
+    <button class="send-btn" bindtap="sendText" disabled="{{!inputText.trim()}}">发送</button>
+  </view>
+  <view class="contact-bar">
+    <button class="btn-plain btn-sm" bindtap="shareContact">{{contactSharedMe?'已同意交换':'同意交换联系方式'}}</button>
+  </view>
+</view>

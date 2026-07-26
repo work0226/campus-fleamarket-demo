@@ -1,0 +1,104 @@
+.tabs {
+  display: flex;
+  padding: 0;
+  overflow: hidden;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  font-size: 30rpx;
+  color: var(--text-secondary);
+  background: #f9fafb;
+}
+
+.tab.active {
+  color: var(--primary);
+  background: #fff;
+  font-weight: 500;
+  border-bottom: 4rpx solid var(--primary);
+}
+
+.list-wrap {
+  height: calc(100vh - 200rpx);
+}
+
+.chat-card {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.chat-card.new {
+  background: #eff6ff;
+}
+
+.chat-card .avatar {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.chat-info {
+  flex: 1;
+  margin-left: 20rpx;
+  overflow: hidden;
+}
+
+.chat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.peer-name {
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.time {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+.chat-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8rpx;
+}
+
+.last-msg {
+  flex: 1;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 16rpx;
+}
+
+.badge {
+  min-width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  background: var(--danger);
+  color: #fff;
+  border-radius: 18rpx;
+  font-size: 22rpx;
+  text-align: center;
+  padding: 0 10rpx;
+}
+
+.type-tag {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: var(--primary);
+}

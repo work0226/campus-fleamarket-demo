@@ -1,0 +1,109 @@
+.filter-bar, .price-bar {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 24rpx;
+}
+
+.picker {
+  font-size: 28rpx;
+  color: var(--text);
+  padding: 8rpx 16rpx;
+  background: #f3f4f6;
+  border-radius: 8rpx;
+  margin-right: 16rpx;
+}
+
+.price-bar input {
+  width: 160rpx;
+  height: 60rpx;
+  background: #f3f4f6;
+  border-radius: 8rpx;
+  text-align: center;
+  font-size: 26rpx;
+}
+
+.price-bar .split {
+  margin: 0 16rpx;
+  color: var(--text-secondary);
+}
+
+.price-bar .reset {
+  margin-left: auto;
+  color: var(--primary);
+  font-size: 28rpx;
+}
+
+.list-wrap {
+  height: calc(100vh - 260rpx);
+}
+
+.want-card {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+}
+
+.want-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.want-header .avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.want-header .user-info {
+  flex: 1;
+  margin-left: 16rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.want-header .nickname {
+  font-size: 28rpx;
+  color: var(--text);
+}
+
+.want-header .campus {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+.want-header .time {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+.want-title {
+  font-size: 32rpx;
+  font-weight: 500;
+  margin-bottom: 12rpx;
+}
+
+.want-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12rpx;
+}
+
+.want-meta .budget {
+  color: var(--danger);
+  font-size: 30rpx;
+  font-weight: 600;
+  margin-right: 20rpx;
+}
+
+.want-note {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  background: #f9fafb;
+  padding: 12rpx;
+  border-radius: 8rpx;
+}

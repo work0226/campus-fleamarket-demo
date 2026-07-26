@@ -1,0 +1,35 @@
+<view class="container">
+  <view class="form card">
+    <view class="form-row">
+      <text class="label">昵称</text>
+      <input placeholder="输入昵称" value="{{nickName}}" bindinput="onNickNameInput" />
+    </view>
+    <view class="tip" wx:if="{{user.lastNicknameChange}}">上次修改：{{formatDate(user.lastNicknameChange)}}，30 天内仅能修改一次</view>
+
+    <view class="form-row">
+      <text class="label">校区</text>
+      <picker range="{{campuses}}" value="{{campusIndex}}" bindchange="onCampusChange">
+        <view class="picker-value">{{campuses[campusIndex] || '请选择校区'}}</view>
+      </picker>
+    </view>
+
+    <view class="form-row">
+      <text class="label">学院</text>
+      <input placeholder="输入学院（可选）" value="{{college}}" bindinput="onCollegeInput" />
+    </view>
+
+    <view class="form-row">
+      <text class="label">联系方式类型</text>
+      <picker range="{{contactTypes}}" value="{{contactTypeIndex}}" bindchange="onContactTypeChange">
+        <view class="picker-value">{{contactTypes[contactTypeIndex]}}</view>
+      </picker>
+    </view>
+
+    <view class="form-row">
+      <text class="label">联系方式</text>
+      <input placeholder="微信号 / 手机号 / QQ" value="{{contact}}" bindinput="onContactInput" />
+    </view>
+  </view>
+
+  <button class="btn-primary" loading="{{saving}}" bindtap="save">保存</button>
+</view>
