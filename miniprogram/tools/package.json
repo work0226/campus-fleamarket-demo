@@ -1,0 +1,15 @@
+{
+  "name": "campus-fleamarket-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "校园跳蚤市场小程序辅助脚本",
+  "scripts": {
+    "validate": "node validate.js",
+    "init-db": "node init-db.js",
+    "upload": "node upload-ci.js"
+  },
+  "dependencies": {
+    "miniprogram-ci": "^9.0.0",
+    "tcb-admin-node": "^1.0.0"
+  }
+}

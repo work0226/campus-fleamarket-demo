@@ -180,6 +180,17 @@ wx.cloud.init({
 4. 点击「提交审核」，按提示填写信息。
 5. 审核通过后点击「发布」即可上线。
 
+## 辅助脚本（可选）
+
+`tools/` 目录下提供了几条辅助命令，可以减少重复操作：
+
+- `npm run validate`：检查项目结构、JSON 可解析性和 JS 语法。
+- `npm run init-db`：自动创建数据库集合与索引（需提供腾讯云 Secret），或打印手动创建清单。
+- `npm run upload`：使用 `miniprogram-ci` 命令行上传代码（需提供 AppID 和上传密钥）。
+- `.github/workflows/upload.yml`：配置 GitHub Actions 后，推送代码即可自动上传到微信小程序后台。
+
+详见 [tools/README.md](tools/README.md)。
+
 ## 下一步
 
 1. 替换 `app.js` 中的云开发环境 ID 和 `project.config.json` 中的 AppID。

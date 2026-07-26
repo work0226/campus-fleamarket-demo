@@ -1,0 +1,43 @@
+name: Upload WeChat Mini Program
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'miniprogram/**'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '上传版本号'
+        required: true
+        default: '1.0.0'
+      desc:
+        description: '版本描述'
+        required: false
+        default: ''
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: miniprogram
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install miniprogram-ci
+        run: npm install miniprogram-ci
+
+      - name: Upload Mini Program
+        env:
+          MINIAPP_APPID: ${{ secrets.MINIAPP_APPID }}
+          MINIAPP_PRIVATE_KEY_BASE64: ${{ secrets.MINIAPP_PRIVATE_KEY_BASE64 }}
+          MINIAPP_VERSION: ${{ github.event.inputs.version || '1.0.0' }}
+          MINIAPP_DESC: ${{ github.event.inputs.desc || format('ci upload {0}', github.sha) }}
+        run: node tools/upload-ci.js
