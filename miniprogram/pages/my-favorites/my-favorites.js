@@ -1,6 +1,6 @@
 const app = getApp();
 const util = require('../../utils/util.js');
-const db = wx.cloud.database();
+const api = require('../../utils/leancloud-api.js');
 
 Page({
   data: {
@@ -25,8 +25,7 @@ Page({
 
   load() {
     this.setData({ loading: true, error: '' });
-    const openid = app.globalData.openid;
-    db.collection('favorites').where({ _openid: openid }).orderBy('createTime', 'desc').get()
+    api.getFavorites()
       .then(res => {
         const favs = res.data || [];
         return this.loadTargets(favs);
@@ -42,9 +41,9 @@ Page({
 
   loadTargets(favs) {
     const tasks = favs.map(f => {
-      const fn = f.type === 'item' ? 'getItem' : 'getWant';
-      return wx.cloud.callFunction({ name: fn, data: { id: f.targetId } })
-        .then(res => ({ ...f, target: res.result.data || {} }));
+      const fn = f.type === 'item' ? api.getItem : api.getWant;
+      return fn(f.targetId)
+        .then(res => ({ ...f, target: res.data || {} }));
     });
     return Promise.all(tasks);
   },
@@ -60,14 +59,14 @@ Page({
   remove(e) {
     const id = e.currentTarget.dataset.id;
     const idx = e.currentTarget.dataset.index;
-    db.collection('favorites').doc(id).remove()
+    api.removeFavorite(id)
       .then(() => {
         const list = this.data.list.slice();
         list.splice(idx, 1);
         this.setData({ list });
       })
       .catch(err => {
-        wx.showToast({ title: '删除失败', icon: 'none' });
+        wx.showToast({ title: err.message || '删除失败', icon: 'none' });
         console.error(err);
       });
   },

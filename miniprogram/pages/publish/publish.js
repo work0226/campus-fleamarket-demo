@@ -1,4 +1,5 @@
 const app = getApp();
+const api = require('../../utils/leancloud-api.js');
 
 const CATEGORIES = ['电子产品', '书籍教材', '生活用品', '服饰鞋包', '美妆护肤', '运动户外', '票务卡券', '其他'];
 const CAMPUSES = ['全部', '主校区', '东校区', '西校区', '南校区'];
@@ -88,15 +89,10 @@ Page({
   },
 
   uploadImages(paths) {
-    const user = app.globalData.userInfo || {};
-    const tasks = paths.map((path, idx) => {
-      const ext = path.match(/\.\w+$/) ? path.match(/\.\w+$/)[0] : '.jpg';
-      const cloudPath = `items/${Date.now()}_${idx}_${Math.random().toString(36).slice(2)}${ext}`;
-      return wx.cloud.uploadFile({ cloudPath, filePath: path });
-    });
+    const tasks = paths.map(path => api.uploadImage(path));
     Promise.all(tasks).then(results => {
-      const fileIDs = results.map(r => r.fileID);
-      this.setData({ images: this.data.images.concat(fileIDs) });
+      const urls = results.map(r => r.url);
+      this.setData({ images: this.data.images.concat(urls) });
     }).catch(err => {
       wx.showToast({ title: '图片上传失败', icon: 'none' });
       console.error(err);
@@ -156,8 +152,8 @@ Page({
     }
 
     this.setData({ submitting: true });
-    const fnName = type === 'item' ? 'publishItem' : 'publishWant';
-    wx.cloud.callFunction({ name: fnName, data: payload })
+    const publishFn = type === 'item' ? api.publishItem : api.publishWant;
+    publishFn(payload)
       .then(() => {
         wx.showToast({ title: '发布成功', icon: 'success' });
         setTimeout(() => {

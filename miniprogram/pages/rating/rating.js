@@ -1,4 +1,5 @@
 const app = getApp();
+const api = require('../../utils/leancloud-api.js');
 
 Page({
   data: {
@@ -24,16 +25,13 @@ Page({
   submit() {
     if (this.data.submitting) return;
     this.setData({ submitting: true });
-    wx.cloud.callFunction({
-      name: 'submitRating',
-      data: {
-        type: 'item',
-        targetId: this.data.targetId,
-        sellerOpenid: this.data.sellerOpenid,
-        score: this.data.score
-      }
+    api.submitRating({
+      type: 'item',
+      targetId: this.data.targetId,
+      sellerOpenid: this.data.sellerOpenid,
+      score: this.data.score
     }).then(res => {
-      const result = res.result || {};
+      const result = res || {};
       if (result.code !== 0) {
         wx.showToast({ title: result.message || '评分失败', icon: 'none' });
         return;

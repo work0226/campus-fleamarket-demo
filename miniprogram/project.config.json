@@ -43,8 +43,6 @@
   "appid": "wxfa611e44bb88a0c4",
   "projectname": "campus-fleamarket",
   "miniprogramRoot": "./",
-  "cloudfunctionRoot": "cloudfunctions/",
-  "cloudfunctionTemplateRoot": "cloudfunctionTemplate/",
   "libVersion": "3.0.0",
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},

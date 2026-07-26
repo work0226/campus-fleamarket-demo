@@ -1,5 +1,6 @@
 const app = getApp();
 const util = require('../../utils/util.js');
+const api = require('../../utils/leancloud-api.js');
 
 Page({
   data: {
@@ -18,9 +19,9 @@ Page({
 
   loadDetail(id) {
     this.setData({ loading: true, error: '' });
-    wx.cloud.callFunction({ name: 'getWant', data: { id } })
+    api.getWant(id)
       .then(res => {
-        const want = res.result.data;
+        const want = res.data;
         if (!want) {
           this.setData({ loading: false, error: '求购不存在' });
           return;
@@ -40,17 +41,15 @@ Page({
   contactOwner() {
     const { want, isOwner } = this.data;
     if (isOwner) return;
-    wx.cloud.callFunction({
-      name: 'createChat',
-      data: { type: 'want', targetId: want._id }
-    }).then(res => {
-      const chat = res.result.chat || {};
-      wx.navigateTo({
-        url: `/pages/chat/chat?chatId=${chat._id || res.result.chatId}&type=want&targetId=${want._id}&peerName=${encodeURIComponent(chat.peerName || want.userNickName || '')}&peerAvatar=${encodeURIComponent(chat.peerAvatar || want.userAvatar || '')}&title=${encodeURIComponent(want.title)}`
+    api.createChat('want', want._id)
+      .then(res => {
+        const chat = res.chat || {};
+        wx.navigateTo({
+          url: `/pages/chat/chat?chatId=${chat._id || res.chatId}&type=want&targetId=${want._id}&peerName=${encodeURIComponent(chat.peerName || want.userNickName || '')}&peerAvatar=${encodeURIComponent(chat.peerAvatar || want.userAvatar || '')}&title=${encodeURIComponent(want.title)}`
+        });
+      }).catch(err => {
+        wx.showToast({ title: err.message || '发起聊天失败', icon: 'none' });
       });
-    }).catch(err => {
-      wx.showToast({ title: err.message || '发起聊天失败', icon: 'none' });
-    });
   },
 
   timeAgo(t) {

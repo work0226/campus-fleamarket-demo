@@ -1,6 +1,6 @@
 const app = getApp();
 const util = require('../../utils/util.js');
-const db = wx.cloud.database();
+const api = require('../../utils/leancloud-api.js');
 
 Page({
   data: {
@@ -52,10 +52,10 @@ Page({
 
   createChatAndLoad() {
     const { type, targetId } = this.data;
-    wx.cloud.callFunction({ name: 'createChat', data: { type, targetId } })
+    api.createChat(type, targetId)
       .then(res => {
-        const chat = res.result.chat || {};
-        this.setData({ chatId: chat._id || res.result.chatId });
+        const chat = res.chat || {};
+        this.setData({ chatId: chat._id || res.chatId });
         this.loadMessages(true);
       })
       .catch(err => {
@@ -66,10 +66,10 @@ Page({
   loadMessages(sendOpening = false) {
     if (!this.data.chatId) return;
     this.setData({ loading: true });
-    return wx.cloud.callFunction({ name: 'getMessages', data: { chatId: this.data.chatId } })
+    return api.getMessages(this.data.chatId)
       .then(res => {
-        const messages = res.result.data || [];
-        const chat = res.result.chat || {};
+        const messages = res.data || [];
+        const chat = res.chat || {};
         const shared = chat.contactShared || {};
         this.setData({
           messages,
@@ -99,11 +99,10 @@ Page({
   },
 
   sendOpeningMessage() {
-    const { type, targetId, openid, peerName } = this.data;
+    const { type, targetId, openid } = this.data;
     let text = '';
     if (type === 'item') {
-      const itemRef = db.collection('items').doc(targetId);
-      itemRef.get().then(res => {
+      api.getItem(targetId).then(res => {
         const item = res.data;
         if (!item) return;
         if (item.sellerOpenid === openid) {
@@ -114,8 +113,7 @@ Page({
         this.doSend(text);
       });
     } else {
-      const wantRef = db.collection('wants').doc(targetId);
-      wantRef.get().then(res => {
+      api.getWant(targetId).then(res => {
         const want = res.data;
         if (!want) return;
         if (want.userOpenid === openid) {
@@ -140,27 +138,25 @@ Page({
 
   doSend(text) {
     if (!this.data.chatId) return;
-    wx.cloud.callFunction({
-      name: 'sendMessage',
-      data: { chatId: this.data.chatId, text }
-    }).then(() => {
-      this.setData({ inputText: '' });
-      this.loadMessages();
-    }).catch(err => {
-      wx.showToast({ title: err.message || '发送失败', icon: 'none' });
-    });
+    api.sendMessage(this.data.chatId, text)
+      .then(() => {
+        this.setData({ inputText: '' });
+        this.loadMessages();
+      }).catch(err => {
+        wx.showToast({ title: err.message || '发送失败', icon: 'none' });
+      });
   },
 
   markRead() {
     if (!this.data.chatId) return;
-    wx.cloud.callFunction({ name: 'markRead', data: { chatId: this.data.chatId } });
+    api.markRead(this.data.chatId);
   },
 
   shareContact() {
     if (!this.data.chatId || this.data.contactSharedMe) return;
-    wx.cloud.callFunction({ name: 'shareContact', data: { chatId: this.data.chatId } })
+    api.shareContact(this.data.chatId)
       .then(res => {
-        const result = res.result || {};
+        const result = res || {};
         this.setData({
           contactSharedMe: true,
           contactVisible: result.bothShared,

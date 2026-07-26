@@ -1,5 +1,6 @@
 const app = getApp();
 const util = require('../../utils/util.js');
+const api = require('../../utils/leancloud-api.js');
 
 const CAMPUSES = ['', '主校区', '东校区', '西校区', '南校区'];
 const CONTACT_TYPES = ['微信号', '手机号', 'QQ'];
@@ -69,9 +70,9 @@ Page({
       contact: this.data.contact.trim()
     };
     this.setData({ saving: true });
-    wx.cloud.callFunction({ name: 'updateProfile', data: payload })
+    api.updateProfile(payload)
       .then(res => {
-        const result = res.result || {};
+        const result = res || {};
         if (result.code !== 0) {
           wx.showToast({ title: result.message || '保存失败', icon: 'none' });
           return;

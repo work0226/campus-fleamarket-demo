@@ -1,5 +1,6 @@
 const app = getApp();
 const util = require('../../utils/util.js');
+const api = require('../../utils/leancloud-api.js');
 
 Page({
   data: {
@@ -33,9 +34,9 @@ Page({
     this.setData({ loading: true, error: '' });
     const openid = app.globalData.openid;
     if (this.data.type === 'item') {
-      wx.cloud.callFunction({ name: 'getItems', data: { sellerOpenid: openid, status: '' } })
+      api.getItems({ sellerOpenid: openid, status: '' })
         .then(res => {
-          const data = (res.result && res.result.data) || [];
+          const data = res.data || [];
           this.setData({ list: data, loading: false });
         })
         .catch(err => {
@@ -43,9 +44,9 @@ Page({
           this.setData({ loading: false, error: '加载失败' });
         });
     } else {
-      wx.cloud.callFunction({ name: 'getWants', data: { userOpenid: openid } })
+      api.getWants({ userOpenid: openid })
         .then(res => {
-          const data = (res.result && res.result.data) || [];
+          const data = res.data || [];
           this.setData({ list: data, loading: false });
         })
         .catch(err => {
@@ -66,10 +67,7 @@ Page({
   toggleStatus(e) {
     const item = e.currentTarget.dataset.item;
     const nextStatus = item.status === 'active' ? 'offline' : 'active';
-    wx.cloud.callFunction({
-      name: 'updateItemStatus',
-      data: { id: item._id, status: nextStatus }
-    }).then(() => {
+    api.updateItemStatus(item._id, nextStatus).then(() => {
       wx.showToast({ title: '状态已更新', icon: 'success' });
       this.load();
     }).catch(err => {
@@ -84,10 +82,7 @@ Page({
       content: '确认将该商品标记为已售？',
       success: (r) => {
         if (r.confirm) {
-          wx.cloud.callFunction({
-            name: 'updateItemStatus',
-            data: { id: item._id, status: 'sold' }
-          }).then(() => {
+          api.updateItemStatus(item._id, 'sold').then(() => {
             wx.showToast({ title: '已标记售出', icon: 'success' });
             this.load();
           }).catch(err => {
@@ -118,15 +113,13 @@ Page({
                     wx.showToast({ title: '价格无效', icon: 'none' });
                     return;
                   }
-                  wx.cloud.callFunction({
-                    name: 'updateItem',
-                    data: { id: item._id, data: { title: r.content.trim(), price } }
-                  }).then(() => {
-                    wx.showToast({ title: '已更新', icon: 'success' });
-                    this.load();
-                  }).catch(err => {
-                    wx.showToast({ title: err.message || '更新失败', icon: 'none' });
-                  });
+                  api.updateItem(item._id, { title: r.content.trim(), price })
+                    .then(() => {
+                      wx.showToast({ title: '已更新', icon: 'success' });
+                      this.load();
+                    }).catch(err => {
+                      wx.showToast({ title: err.message || '更新失败', icon: 'none' });
+                    });
                 }
               }
             });
@@ -151,16 +144,13 @@ Page({
                     wx.showToast({ title: '预算无效', icon: 'none' });
                     return;
                   }
-                  // 求购暂无 updateWant 云函数，直接客户端更新自己的记录
-                  const db = wx.cloud.database();
-                  db.collection('wants').doc(item._id).update({
-                    data: { title: r.content.trim(), budget, updateTime: db.serverDate() }
-                  }).then(() => {
-                    wx.showToast({ title: '已更新', icon: 'success' });
-                    this.load();
-                  }).catch(err => {
-                    wx.showToast({ title: err.message || '更新失败', icon: 'none' });
-                  });
+                  api.updateWant(item._id, { title: r.content.trim(), budget })
+                    .then(() => {
+                      wx.showToast({ title: '已更新', icon: 'success' });
+                      this.load();
+                    }).catch(err => {
+                      wx.showToast({ title: err.message || '更新失败', icon: 'none' });
+                    });
                 }
               }
             });
@@ -177,8 +167,8 @@ Page({
       content: '删除后不可恢复，确定删除？',
       success: (r) => {
         if (r.confirm) {
-          const fn = this.data.type === 'item' ? 'deleteItem' : 'deleteWant';
-          wx.cloud.callFunction({ name: fn, data: { id: item._id } })
+          const fn = this.data.type === 'item' ? api.deleteItem : api.deleteWant;
+          fn(item._id)
             .then(() => {
               wx.showToast({ title: '已删除', icon: 'success' });
               this.load();

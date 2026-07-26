@@ -1,5 +1,6 @@
 const app = getApp();
 const util = require('../../utils/util.js');
+const api = require('../../utils/leancloud-api.js');
 
 const CATEGORIES = ['全部', '电子产品', '书籍教材', '生活用品', '服饰鞋包', '美妆护肤', '运动户外', '票务卡券', '其他'];
 const CAMPUSES = ['全部', '主校区', '东校区', '西校区', '南校区'];
@@ -76,9 +77,9 @@ Page({
       minBudget: parseFloat(this.data.minBudget) || 0,
       maxBudget: parseFloat(this.data.maxBudget) || 0
     };
-    return wx.cloud.callFunction({ name: 'getWants', data: params })
+    return api.getWants(params)
       .then(res => {
-        const data = res.result && res.result.data ? res.result.data : [];
+        const data = res.data || [];
         this.setData({ wants: data, loading: false });
       })
       .catch(err => {

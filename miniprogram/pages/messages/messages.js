@@ -1,5 +1,6 @@
 const app = getApp();
 const util = require('../../utils/util.js');
+const api = require('../../utils/leancloud-api.js');
 
 Page({
   data: {
@@ -38,10 +39,9 @@ Page({
 
   loadChats() {
     this.setData({ loading: true, error: '' });
-    const params = { type: this.data.filter };
-    return wx.cloud.callFunction({ name: 'getChats', data: params })
+    return api.getChats(this.data.filter)
       .then(res => {
-        const data = res.result && res.result.data ? res.result.data : [];
+        const data = res.data || [];
         data.forEach(c => {
           c.timeStr = util.timeAgo(c.lastTime);
         });

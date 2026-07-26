@@ -1,5 +1,5 @@
 const app = getApp();
-const db = wx.cloud.database();
+const api = require('../../utils/leancloud-api.js');
 
 Page({
   data: {
@@ -25,25 +25,24 @@ Page({
 
   loadStats() {
     const openid = app.globalData.openid;
-    wx.cloud.callFunction({ name: 'getItems', data: { sellerOpenid: openid, status: '' } })
+    api.getItems({ sellerOpenid: openid, status: '' })
       .then(res => {
-        const items = (res.result && res.result.data) || [];
-        return db.collection('favorites').where({ _openid: openid }).count()
-          .then(favRes => {
-            this.setData({
-              stats: {
-                items: items.length,
-                favorites: favRes.total || 0
-              }
-            });
+        const items = res.data || [];
+        return api.getFavorites().then(favRes => {
+          this.setData({
+            stats: {
+              items: items.length,
+              favorites: (favRes.data || []).length
+            }
           });
+        });
       });
   },
 
   loadCredit() {
-    wx.cloud.callFunction({ name: 'getCreditScore', data: { sellerOpenid: app.globalData.openid } })
+    api.getCreditScore(app.globalData.openid)
       .then(res => {
-        const result = res.result || {};
+        const result = res || {};
         this.setData({ credit: { average: result.average || 0, count: result.count || 0 } });
       });
   },
@@ -55,11 +54,9 @@ Page({
       sourceType: ['album', 'camera'],
       success: res => {
         const path = res.tempFilePaths[0];
-        const ext = path.match(/\.\w+$/) ? path.match(/\.\w+$/)[0] : '.jpg';
-        const cloudPath = `avatars/${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`;
-        wx.cloud.uploadFile({ cloudPath, filePath: path })
+        api.uploadImage(path)
           .then(upRes => {
-            wx.cloud.callFunction({ name: 'updateProfile', data: { avatarUrl: upRes.fileID } })
+            api.updateProfile({ avatarUrl: upRes.url })
               .then(() => {
                 app.refreshUser().then(u => this.setData({ user: u || {} }));
               });
