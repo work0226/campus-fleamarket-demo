@@ -1989,7 +1989,7 @@
       if (!state.currentItem) return;
       const item = state.currentItem;
       state.currentChat = item;
-      const initialMsg = { from: 'other', text: `你好，我对你的「${item.title}」感兴趣，请问还在吗？`, time: Date.now(), type: 'text' };
+      const initialMsg = { from: 'me', text: `你好，我对你的「${item.title}」感兴趣，请问还在吗？`, time: Date.now(), type: 'text' };
       const record = updateChatRecord({
         type: 'item',
         targetId: item.id,
