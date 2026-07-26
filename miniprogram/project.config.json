@@ -40,7 +40,7 @@
     "showES6CompileOption": false,
     "useCompilerPlugins": false
   },
-  "appid": "wx-your-app-id",
+  "appid": "wxfa611e44bb88a0c4",
   "projectname": "campus-fleamarket",
   "miniprogramRoot": "./",
   "cloudfunctionRoot": "cloudfunctions/",
