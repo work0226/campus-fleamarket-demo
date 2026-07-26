@@ -2094,6 +2094,8 @@
     function openChat() {
       if (!state.currentItem) return;
       const item = state.currentItem;
+      if (item.status === 'sold') { showToast('该商品已售出'); return; }
+      if (item.status === 'offline') { showToast('该商品已下架'); return; }
       state.currentChat = item;
       const initialMsg = { from: 'me', text: `你好，我对你的「${item.title}」感兴趣，请问还在吗？`, time: Date.now(), type: 'text' };
       const record = updateChatRecord({
@@ -2143,11 +2145,19 @@
     }
 
     function updateChatRecord(record) {
-      const idx = state.chats.findIndex(c => c.type === record.type && c.targetId === record.targetId);
+      // 每条聊天记录归属到当前用户（买家/有意出售者），避免多人共用一条记录
+      if (!record.buyer) record.buyer = currentUser.name;
+      const idx = state.chats.findIndex(c => c.type === record.type && c.targetId === record.targetId && c.buyer === record.buyer);
+      // 兼容旧数据：没有 buyer 字段的记录按当前用户认领
+      const compatIdx = idx === -1 ? state.chats.findIndex(c => c.type === record.type && c.targetId === record.targetId && !c.buyer) : -1;
       let updated;
       if (idx !== -1) {
         updated = { ...state.chats[idx], ...record };
         state.chats.splice(idx, 1);
+        state.chats.unshift(updated);
+      } else if (compatIdx !== -1) {
+        updated = { ...state.chats[compatIdx], ...record, buyer: record.buyer };
+        state.chats.splice(compatIdx, 1);
         state.chats.unshift(updated);
       } else {
         updated = { messages: [], unread: 0, ...record };
@@ -2504,6 +2514,10 @@
     function submitRating() {
       const item = state.currentChat;
       if (!item || !item.seller || item.status !== 'sold' || pendingRatingScore < 1 || pendingRatingScore > 5) return;
+      // 只允许实际参与过交易的当前买家评分
+      state.currentChat = item;
+      const record = findChatRecord();
+      if (!record || !record.messages.some(m => m.from === 'me')) { showToast('无法评分：你没有联系过卖家'); return; }
       const rated = state.ratings.some(r => r.type === 'item' && r.targetId === item.id && r.buyer === currentUser.name);
       if (rated) { showToast('已经评分过了'); return; }
       state.ratings.push({
@@ -2523,7 +2537,14 @@
     function findChatRecord() {
       if (!state.currentChat) return null;
       const type = state.currentChat.seller ? 'item' : 'want';
-      return state.chats.find(c => c.type === type && c.targetId === state.currentChat.id);
+      const buyer = currentUser.name;
+      let record = state.chats.find(c => c.type === type && c.targetId === state.currentChat.id && c.buyer === buyer);
+      // 兼容旧数据
+      if (!record) {
+        record = state.chats.find(c => c.type === type && c.targetId === state.currentChat.id && !c.buyer);
+        if (record) record.buyer = buyer;
+      }
+      return record;
     }
 
     let currentWant = null;
