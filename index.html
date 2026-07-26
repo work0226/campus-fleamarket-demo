@@ -422,6 +422,15 @@
       font-size: 13px;
       cursor: pointer;
     }
+    .wanted-card .tag-own {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 5px 12px;
+      cursor: pointer;
+    }
 
     .profile-header {
       background: linear-gradient(135deg, var(--accent), #10b981);
@@ -1753,16 +1762,21 @@
         return;
       }
       empty.style.display = 'none';
-      container.innerHTML = filtered.map(w => `
+      container.innerHTML = filtered.map(w => {
+        const isMine = w.user === currentUser.name;
+        const btn = isMine
+          ? `<span class="tag-own" onclick="event.stopPropagation(); openWantDetail(${w.id})">我的</span>`
+          : `<button class="btn-have" onclick="event.stopPropagation(); contactWant(${w.id}, this)">我有</button>`;
+        return `
         <div class="wanted-card" onclick="openWantDetail(${w.id})">
           <div class="title">求购：${w.title}</div>
           <div class="info">${w.budget ? '预算：≤ ¥' + w.budget : '预算面议'} · 期望：${w.condition}${w.note ? ' · ' + w.note : ''}</div>
           <div class="footer">
             <span class="user">${w.user} · ${w.college} · ${formatTime(w.time)}</span>
-            <button class="btn-have" onclick="event.stopPropagation(); contactWant(${w.id}, this)">我有</button>
+            ${btn}
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
     function handlePhotos(e) {
@@ -2046,13 +2060,21 @@
         container.innerHTML = '<div class="empty-state"><div class="icon">💬</div><div class="title">暂无消息</div><p>从商品或求购详情页发起沟通，<br>交易问题可以直接聊</p><button class="empty-btn secondary" onclick="closeModal(\'message-modal\'); switchTab(\'home\');">去逛逛</button></div>';
         return;
       }
-      container.innerHTML = state.chats.map((c, i) => `
+      container.innerHTML = state.chats.map((c, i) => {
+        let peerName = c.peerName;
+        if (c.type === 'want') {
+          const want = state.wanted.find(w => w.id === c.targetId);
+          if (want && want.user === currentUser.name && peerName === currentUser.name) {
+            peerName = '有意出售者';
+          }
+        }
+        return `
         <div class="message-card" onclick="openChatByRecord(${i})">
-          <div class="avatar">${c.peerName[0]}</div>
+          <div class="avatar">${peerName[0]}</div>
           <div class="info">
             <div class="context">${c.type === 'item' ? '闲置' : '求购'} · ${c.title}</div>
             <div class="top">
-              <span class="name">${c.peerName}</span>
+              <span class="name">${peerName}</span>
               <span class="time">${formatTime(c.lastTime)}</span>
             </div>
             <div class="bottom">
@@ -2062,7 +2084,7 @@
             </div>
           </div>
         </div>
-      `).join('');
+      `}).join('');
     }
 
     function deleteChat(index) {
@@ -2087,8 +2109,12 @@
 
     function renderChatMessages(messages) {
       const box = document.getElementById('chat-box');
-      const contextHtml = (state.currentChat && !state.currentChat.seller && state.currentChat.user) ?
-        `<div class="chat-context">来自求购：<strong>${escapeHtml(state.currentChat.title)}</strong><br>预算 ${state.currentChat.budget ? '≤ ¥' + state.currentChat.budget : '面议'} · ${escapeHtml(state.currentChat.condition)}</div>` : '';
+      let contextHtml = '';
+      if (state.currentChat && !state.currentChat.seller && state.currentChat.user) {
+        const isMyWant = state.currentChat.user === currentUser.name;
+        const prefix = isMyWant ? '我发布的求购' : '对方求购';
+        contextHtml = `<div class="chat-context">${prefix}：<strong>${escapeHtml(state.currentChat.title)}</strong><br>预算 ${state.currentChat.budget ? '≤ ¥' + state.currentChat.budget : '面议'} · ${escapeHtml(state.currentChat.condition)}</div>`;
+      }
       if (!messages || messages.length === 0) {
         box.innerHTML = contextHtml + '<div class="chat-time">开始聊天吧</div>';
         return;
@@ -2164,7 +2190,14 @@
         currentWant = want;
         state.currentChat = want;
       }
-      document.getElementById('chat-title').textContent = record.peerName;
+      let chatTitle = record.peerName;
+      if (record.type === 'want') {
+        const want = state.wanted.find(w => w.id === record.targetId);
+        if (want && want.user === currentUser.name && record.peerName === currentUser.name) {
+          chatTitle = '有意出售者';
+        }
+      }
+      document.getElementById('chat-title').textContent = chatTitle;
       let changed = false;
       (record.messages || []).forEach(m => { if (m.from === 'me' && !m.read) { m.read = true; changed = true; } });
       if (changed) saveData();
@@ -2272,7 +2305,11 @@
       updateChatRecord(record);
       setTimeout(() => {
         record.messages.filter(m => m.from === 'me').forEach(m => m.read = true);
-        const reply = { from: 'other', text: '好的，我们可以约个时间面交。', time: Date.now(), type: 'text' };
+        const isItemChat = state.currentChat && state.currentChat.seller;
+        const replyText = isItemChat
+          ? '好的，我们可以约个时间面交。'
+          : '你好，我对这个求购很感兴趣，方便聊一下吗？';
+        const reply = { from: 'other', text: replyText, time: Date.now(), type: 'text' };
         record.messages.push(reply);
         record.lastMsg = reply.text;
         record.lastTime = reply.time;
@@ -2371,16 +2408,25 @@
       setAvatarEl(document.getElementById('want-detail-avatar'), want.user[0], wantIsMe ? currentUser.avatarUrl : null);
       document.getElementById('want-detail-college').textContent = want.college;
       document.getElementById('want-detail-note').textContent = want.note || '暂无补充说明';
+      const actionEl = document.querySelector('#want-detail-modal .detail-action');
+      if (actionEl) {
+        actionEl.innerHTML = wantIsMe
+          ? `<button class="btn-chat" style="background: var(--bg2); color: var(--ink); border: 1px solid var(--rule);" onclick="showListPage('my-wants')">管理我的求购</button>`
+          : `<button class="btn-chat" onclick="contactFromDetail()">我有这个，联系 TA</button>`;
+      }
       document.getElementById('want-detail-modal').classList.add('active');
     }
 
     function contactWant(id, btn) {
       const want = state.wanted.find(w => w.id === id);
-      if (want) openChatWithWant(want);
+      if (!want) return;
+      if (want.user === currentUser.name) { showToast('不能联系自己发布的求购'); return; }
+      openChatWithWant(want);
     }
 
     function contactFromDetail() {
       if (!currentWant) return;
+      if (currentWant.user === currentUser.name) { showToast('不能联系自己发布的求购'); return; }
       openChatWithWant(currentWant);
     }
 
