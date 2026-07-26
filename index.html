@@ -825,6 +825,45 @@
     }
     .list-card .actions .danger { color: var(--danger); border-color: rgba(239,68,68,0.3); }
 
+    .msg-filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px 6px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--rule);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .msg-filter {
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--rule);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .msg-filter.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+      font-weight: 600;
+    }
+    .msg-filter .badge {
+      display: inline-block;
+      min-width: 16px;
+      height: 16px;
+      line-height: 16px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      margin-left: 4px;
+      text-align: center;
+    }
     .message-card {
       display: flex;
       gap: 12px;
@@ -832,6 +871,31 @@
       background: var(--bg2);
       border-bottom: 1px solid var(--rule);
       cursor: pointer;
+      position: relative;
+      transition: background 0.15s;
+    }
+    .message-card.unread {
+      background: #f0f9ff;
+    }
+    .message-card.unread::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent);
+    }
+    .message-card.new-arrival .time::after {
+      content: '新消息';
+      display: inline-block;
+      margin-left: 6px;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--danger);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 600;
     }
     .message-card .avatar {
       width: 48px;
@@ -854,7 +918,9 @@
       margin-bottom: 6px;
     }
     .message-card .name { font-weight: 600; }
+    .message-card.unread .name { font-weight: 700; color: var(--ink); }
     .message-card .time { font-size: 12px; color: var(--muted); }
+    .message-card.unread .time { color: var(--accent); font-weight: 600; }
     .message-card .bottom {
       display: flex;
       justify-content: space-between;
@@ -869,6 +935,7 @@
       white-space: nowrap;
       flex: 1;
     }
+    .message-card.unread .msg { color: var(--ink); font-weight: 500; }
     .message-card .tag {
       font-size: 11px;
       color: var(--accent);
@@ -878,10 +945,17 @@
       flex-shrink: 0;
     }
     .message-card .unread {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
       background: var(--danger);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
       flex-shrink: 0;
       margin-left: 4px;
     }
@@ -892,6 +966,22 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .message-card .type-icon {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .message-card .type-icon.want {
+      background: #f59e0b;
+    }
+    .message-card .type-icon.item {
+      background: var(--accent);
     }
     .message-card .delete {
       color: var(--muted);
@@ -1308,6 +1398,11 @@
         <h2>消息</h2>
       </div>
       <div class="modal-body" style="background: var(--bg);">
+        <div class="msg-filter-bar" id="msg-filter-bar">
+          <span class="msg-filter active" data-filter="all" onclick="setMsgFilter('all')">全部</span>
+          <span class="msg-filter" data-filter="item" onclick="setMsgFilter('item')">闲置</span>
+          <span class="msg-filter" data-filter="want" onclick="setMsgFilter('want')">求购</span>
+        </div>
         <div id="message-list"></div>
       </div>
     </div>
@@ -1417,6 +1512,7 @@
 
     let state = {
       activeTab: 'home',
+      msgFilter: 'all',
       homeTag: '全部',
       wantedTag: '全部',
       homePriceIdx: 0,
@@ -2056,11 +2152,34 @@
     function renderMessages() {
       const container = document.getElementById('message-list');
       if (!container) return;
-      if (state.chats.length === 0) {
-        container.innerHTML = '<div class="empty-state"><div class="icon">💬</div><div class="title">暂无消息</div><p>从商品或求购详情页发起沟通，<br>交易问题可以直接聊</p><button class="empty-btn secondary" onclick="closeModal(\'message-modal\'); switchTab(\'home\');">去逛逛</button></div>';
+      const filterBar = document.getElementById('msg-filter-bar');
+      const counts = { all: state.chats.length, item: 0, want: 0 };
+      const unreadCounts = { all: 0, item: 0, want: 0 };
+      state.chats.forEach(c => {
+        counts[c.type] = (counts[c.type] || 0) + 1;
+        if (c.unread > 0) {
+          unreadCounts[c.type] = (unreadCounts[c.type] || 0) + c.unread;
+          unreadCounts.all += c.unread;
+        }
+      });
+      if (filterBar) {
+        filterBar.innerHTML = ['all', 'item', 'want'].map(type => {
+          const label = type === 'all' ? '全部' : (type === 'item' ? '闲置' : '求购');
+          const active = state.msgFilter === type ? 'active' : '';
+          const badge = unreadCounts[type] > 0 ? `<span class="badge">${unreadCounts[type] > 99 ? '99+' : unreadCounts[type]}</span>` : '';
+          return `<span class="msg-filter ${active}" data-filter="${type}" onclick="setMsgFilter('${type}')">${label}${badge}</span>`;
+        }).join('');
+      }
+      const filtered = state.msgFilter === 'all' ? state.chats : state.chats.filter(c => c.type === state.msgFilter);
+      if (filtered.length === 0) {
+        const emptyText = state.msgFilter === 'item' ? '暂无闲置相关消息' : (state.msgFilter === 'want' ? '暂无求购相关消息' : '暂无消息');
+        container.innerHTML = `<div class="empty-state"><div class="icon">💬</div><div class="title">${emptyText}</div><p>从商品或求购详情页发起沟通，<br>交易问题可以直接聊</p><button class="empty-btn secondary" onclick="closeModal('message-modal'); switchTab('home');">去逛逛</button></div>`;
         return;
       }
-      container.innerHTML = state.chats.map((c, i) => {
+      const now = Date.now();
+      const newArrivalThreshold = 5 * 60 * 1000;
+      container.innerHTML = filtered.map((c, i) => {
+        const originalIndex = state.chats.indexOf(c);
         let peerName = c.peerName;
         if (c.type === 'want') {
           const want = state.wanted.find(w => w.id === c.targetId);
@@ -2068,23 +2187,31 @@
             peerName = '有意出售者';
           }
         }
-        return `
-        <div class="message-card" onclick="openChatByRecord(${i})">
-          <div class="avatar">${peerName[0]}</div>
-          <div class="info">
-            <div class="context">${c.type === 'item' ? '闲置' : '求购'} · ${c.title}</div>
+        const isUnread = (c.unread || 0) > 0;
+         const isNewArrival = isUnread && (now - c.lastTime < newArrivalThreshold);
+         const typeLabel = c.type === 'item' ? '闲置' : '求购';
+         return `
+         <div class="message-card ${isUnread ? 'unread' : ''} ${isNewArrival ? 'new-arrival' : ''}" onclick="openChatByRecord(${originalIndex})">
+           <div class="avatar">${peerName[0]}</div>
+           <div class="info">
+             <div class="context"><span class="type-icon ${c.type}"></span> ${typeLabel} · ${c.title}</div>
             <div class="top">
               <span class="name">${peerName}</span>
               <span class="time">${formatTime(c.lastTime)}</span>
             </div>
             <div class="bottom">
               <span class="msg">${c.lastMsg}</span>
-              ${c.unread > 0 ? '<span class="unread"></span>' : ''}
-              <span class="tag" onclick="event.stopPropagation(); deleteChat(${i})">删除</span>
+              ${isUnread ? `<span class="unread">${c.unread > 99 ? '99+' : c.unread}</span>` : ''}
+              <span class="tag" onclick="event.stopPropagation(); deleteChat(${originalIndex})">删除</span>
             </div>
           </div>
         </div>
       `}).join('');
+    }
+
+    function setMsgFilter(type) {
+      state.msgFilter = type;
+      renderMessages();
     }
 
     function deleteChat(index) {
