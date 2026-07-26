@@ -2022,6 +2022,16 @@
           <button class="btn-status" onclick="setItemStatus(${item.id}, 'sold')">${item.status === 'sold' ? '已售出' : '标记售出'}</button>
           <button class="btn-status" onclick="setItemStatus(${item.id}, 'offline')">${item.status === 'offline' ? '已下架' : '下架'}</button>
         `;
+      } else if (item.status === 'sold') {
+        actionEl.innerHTML = `
+          <button class="btn-wish ${isLiked ? 'active' : ''}" disabled style="opacity:0.6; cursor:not-allowed;">${isLiked ? '已想要' : '想要'}</button>
+          <button class="btn-chat" disabled style="opacity:0.6; cursor:not-allowed;">已售出</button>
+        `;
+      } else if (item.status === 'offline') {
+        actionEl.innerHTML = `
+          <button class="btn-wish ${isLiked ? 'active' : ''}" disabled style="opacity:0.6; cursor:not-allowed;">${isLiked ? '已想要' : '想要'}</button>
+          <button class="btn-chat" disabled style="opacity:0.6; cursor:not-allowed;">已下架</button>
+        `;
       } else {
         actionEl.innerHTML = `
           <button class="btn-wish ${isLiked ? 'active' : ''}" id="detail-wish" onclick="toggleWish()">${isLiked ? '已想要' : '想要'}</button>
@@ -2326,7 +2336,7 @@
       }
       document.getElementById('chat-title').textContent = chatTitle;
       let changed = false;
-      (record.messages || []).forEach(m => { if (m.from === 'me' && !m.read) { m.read = true; changed = true; } });
+      (record.messages || []).forEach(m => { if (m.from === 'other' && !m.read) { m.read = true; changed = true; } });
       if (changed) saveData();
       renderChatMessages(record.messages || []);
       renderRatingBanner();
@@ -2371,7 +2381,6 @@
       saveData();
       updateChatRecord(record);
       setTimeout(() => {
-        record.messages.filter(m => m.from === 'me').forEach(m => m.read = true);
         const contact = getContactInfo(state.currentChat);
         const agreeMsg = { from: 'other', text: '对方已同意交换联系方式', time: Date.now(), type: 'contact', contact };
         record.messages.push(agreeMsg);
@@ -2636,7 +2645,9 @@
               ` : ''}
               ${state.listType === 'my-likes' ? `
                 <div class="actions">
-                  <button onclick="event.stopPropagation(); contactSellerFromLike(${item.id})">联系卖家</button>
+                  ${item.status === 'active'
+                    ? `<button onclick="event.stopPropagation(); contactSellerFromLike(${item.id})">联系卖家</button>`
+                    : `<button disabled style="opacity:0.6; cursor:not-allowed;">${item.status === 'sold' ? '已售出' : '已下架'}</button>`}
                   <button class="danger" onclick="event.stopPropagation(); unlikeItem(${item.id})">取消想要</button>
                 </div>
               ` : ''}
@@ -2649,6 +2660,8 @@
     function contactSellerFromLike(id) {
       const item = state.items.find(i => i.id === id);
       if (!item) return;
+      if (item.status === 'sold') { showToast('该商品已售出'); return; }
+      if (item.status === 'offline') { showToast('该商品已下架'); return; }
       state.currentItem = item;
       closeModal('list-modal');
       openChat();
